@@ -1,0 +1,11 @@
+[
+  {
+    "id": 0,
+    "name": "example.png",
+    "n_cells": 53,
+    "n_infected": 11,
+    "n_uninfected": 42,
+    "parasitemia": 0.21,
+    "plot": "static/example/example.png"
+  }
+]

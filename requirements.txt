@@ -1,0 +1,4 @@
+Flask
+fastai
+torch
+flask_cors
