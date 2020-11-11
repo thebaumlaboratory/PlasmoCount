@@ -2,7 +2,7 @@ import React from "react";
 
 const Menu = () => {
   return (
-    <div className="ui secondary pointing menu">
+    <div className="ui stackable secondary pointing menu">
       <div className="header item">Malaria detection</div>
       <a className="active item">Home</a>
       <a className="item">About</a>

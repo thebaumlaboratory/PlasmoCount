@@ -6,7 +6,13 @@ import torch
 from torchvision import transforms
 
 
-def plot_labels(img, labels, color_dict={}, cmap="rainbow", save_to=None, axis=False, **kwargs):
+def plot_labels(img,
+                labels,
+                color_dict={},
+                cmap="rainbow",
+                save_to=None,
+                axis=False,
+                **kwargs):
     img = transforms.ToPILImage()(img).convert("RGB")
     fig, ax = plt.subplots(1, **kwargs)
     ax.imshow(img)
@@ -25,7 +31,7 @@ def plot_labels(img, labels, color_dict={}, cmap="rainbow", save_to=None, axis=F
         for i, cat in enumerate(cats_unique):
             colors[cat] = pylab.get_cmap(cmap)(1.0 * i / len(cats_unique))
     else:
-      colors = color_dict
+        colors = color_dict
 
     for i, (x1, y1, x2, y2) in enumerate(bboxes):
         cat = categories[i]
@@ -48,3 +54,9 @@ def plot_labels(img, labels, color_dict={}, cmap="rainbow", save_to=None, axis=F
         plt.savefig(save_to, bbox_inches='tight', pad_inches=0)
     else:
         plt.show()
+
+
+def make_crop(img, bbox, save_to):
+    img = transforms.ToPILImage()(img).convert("RGB")
+    crop = img.crop(bbox)
+    crop.save(save_to)

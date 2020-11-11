@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { CSVLink } from "react-csv";
 
-const Table = ({ dataLabels, rowData, onClick, csvData }) => {
+const Table = ({ dataLabels, rowData, onClick }) => {
   const [activeRowIndex, setActiveRow] = useState(null);
   const handleClick = (i) => {
     setActiveRow(i);
@@ -18,7 +18,7 @@ const Table = ({ dataLabels, rowData, onClick, csvData }) => {
     const cells = Object.keys(dataLabels).map((label, labelIndex) => {
       return (
         <td key={labelIndex} data-label={label}>
-          {row[label]}
+          {String(row[label]).replace("_", " ")}
         </td>
       );
     });
@@ -44,9 +44,9 @@ const Table = ({ dataLabels, rowData, onClick, csvData }) => {
   const Footer = (
     <tfoot className="full-width">
       <tr>
-        <th colSpan="4">
+        <th colSpan={`${Object.keys(dataLabels).length}`}>
           <CSVLink
-            className="ui small primary right floated button"
+            className="ui mini primary right floated button"
             data={handleExport()}
             filename={"export.csv"}
           >

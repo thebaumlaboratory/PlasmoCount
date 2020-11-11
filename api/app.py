@@ -2,7 +2,9 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS, cross_origin
 from model import Model
 from result import Result
-from models.fastai_modules import ExperimentCallback  #TODO: this is awkward here
+from summary import summarize
+from pathlib import Path
+from models.fastai_modules import ExperimentCallback, AgeModel, L1LossFlat  #TODO: this is awkward here
 import matplotlib
 matplotlib.use('Agg')
 import json
@@ -20,22 +22,27 @@ def run_model(upload_folder='static/uploads/'):
     model = Model()
 
     results = []
+    life_stages = []
     for i in files:
         # load result
         img = model.load_image(files[i])
         pred = model.predict()
         result = Result(i, files[i].filename, img, pred)
-        result.run(save_to='%s%s.png' % (upload_folder, time.time()))
+        result_dir = Path('%s/%s' % (upload_folder, time.time()))
+        result.run(save_to=result_dir)
+        life_stages.append(result.asex)
         results.append(result.to_output())
 
-    return {'results': results}
+    #get summary statistics
+    summary = summarize(results, life_stages)
+    return {'summary': summary, 'results': results}
 
 
 @app.route('/example', methods=['POST'])
 def return_example():
     with open('static/example/example.json') as f:
-        results = json.load(f)
-    return {'results': results}
+        data = json.load(f)
+    return {'summary': data['summary'], 'results': data['results']}
 
 
 if __name__ == '__main__':
