@@ -26,12 +26,14 @@ const Form = (props) => {
 
   return (
     <div className="ui styled fluid accordion">
-      <div className={`${active} title big`}>
-        <i onClick={() => makeOpen(!isOpen)} className="dropdown icon"></i>
-        Upload
+      <div className={`${active} title`}>
+        <span style={{ lineHeight: "28px" }}>
+          <i onClick={() => makeOpen(!isOpen)} className="dropdown icon"></i>
+          Upload
+        </span>
         <button
           onClick={() => onLoadExample()}
-          className="mini ui right floated basic button"
+          className="ui mini right floated basic button"
         >
           Load example
         </button>
