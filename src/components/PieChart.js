@@ -14,18 +14,23 @@ const PieChart = ({ values, labels, colors, title }) => {
       },
     };
   });
-  console.log(data);
   return (
     <Plot
-      useResizeHandler
+      className="ui container"
       data={data}
+      useResizeHandler={true}
+      style={{ width: "100%", height: "100%" }}
       layout={{
+        autosize: true,
         showlegend: false,
         grid: { rows: 1, columns: values.length },
         title: title,
-        autosize: true,
-        width: 520,
-        height: 400,
+        margin: {
+          l: 40,
+          t: 40,
+          b: 40,
+          r: 40,
+        },
       }}
     />
   );

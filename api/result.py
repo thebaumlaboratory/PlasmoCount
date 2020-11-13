@@ -17,13 +17,15 @@ class Result:
                 'schizont': '#3ba3ec',
                 'gametocyte': '#ffd92f'
             },
-            cutoffs=[1.5, 2.5]):
+            cutoffs=[1.5, 2.5],
+            asex_digits=2):
         self.id = id
         self.fname = fname
         self.img = img
         self.pred = pred
         self.color_dict = color_dict
         self.cutoffs = cutoffs
+        self.asex_digits = asex_digits
 
     def run(self, save_to):
         save_to.mkdir()
@@ -38,7 +40,7 @@ class Result:
         self.pred['life_stage_c'] = self.pred['life_stage'].apply(
             lambda x: self.calc_life_stages(x))
         self.life_stage_counts = self.pred['life_stage_c'].value_counts()
-        self.get_asexuals(save_to)
+        self.asex = self.get_asexuals(save_to)
 
         # plotting
         self.plot = self.plot_prediction(save_to=save_to / 'full.png')
@@ -56,6 +58,8 @@ class Result:
             'n_troph': int(self.life_stage_counts.get('trophozoite', 0)),
             'n_schizont': int(self.life_stage_counts.get('schizont', 0)),
             'n_gam': int(self.life_stage_counts.get('gametocyte', 0)),
+            'asex_stages': list(self.asex['life_stage']),
+            'asex_images': list(self.asex['filename'])
         }
 
     def calc_life_stages(self, x):
@@ -79,16 +83,19 @@ class Result:
             'uninfected'] if 'uninfected' in self.counts.keys() else 0
         self.parasitemia = round(self.n_infected / self.n_cells, 2)
 
-    def get_asexuals(self, save_to):
-        asex_stages = ['ring', 'trophozoite', 'schizont']
-        asex = self.pred.loc[self.pred['life_stage_c'].isin(asex_stages)]
-        asex = asex.reset_index()
+    def get_asexuals(self,
+                     save_to,
+                     stages=['ring', 'trophozoite', 'schizont']):
+        asex = self.pred.loc[self.pred['life_stage_c'].isin(
+            stages)].reset_index()
         asex['filename'] = asex['index'].apply(lambda x: str(save_to /
                                                              ('%s.png' % x)))
         asex.apply(lambda x: make_crop(self.img, x['boxes'], x['filename']),
                    axis=1)
-
-        self.asex = asex[['filename', 'life_stage']]
+        asex.sort_values('life_stage', inplace=True)
+        asex['life_stage'] = asex['life_stage'].apply(
+            lambda x: round(x, self.asex_digits))
+        return asex[['filename', 'life_stage']]
 
     def plot_prediction(self, save_to, **kwargs):
         plot_labels(self.img, {

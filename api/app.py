@@ -22,7 +22,6 @@ def run_model(upload_folder='static/uploads/'):
     model = Model()
 
     results = []
-    life_stages = []
     for i in files:
         # load result
         img = model.load_image(files[i])
@@ -30,11 +29,12 @@ def run_model(upload_folder='static/uploads/'):
         result = Result(i, files[i].filename, img, pred)
         result_dir = Path('%s/%s' % (upload_folder, time.time()))
         result.run(save_to=result_dir)
-        life_stages.append(result.asex)
         results.append(result.to_output())
 
     #get summary statistics
-    summary = summarize(results, life_stages)
+    summary = summarize(results)
+    print(summary)
+    print(results)
     return {'summary': summary, 'results': results}
 
 
@@ -46,4 +46,4 @@ def return_example():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='192.168.0.48')

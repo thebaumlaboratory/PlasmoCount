@@ -16,7 +16,9 @@
     "react-dom": "^16.13.1",
     "react-plotly.js": "^2.5.0",
     "react-scripts": "3.4.1",
-    "react-semantic-ui-range": "^0.7.0"
+    "react-semantic-ui-range": "^0.7.0",
+    "semantic-ui-css": "^2.4.1",
+    "semantic-ui-react": "^2.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -36,11 +38,11 @@
     ],
     "development": [
       "last 1 chrome version",
-      "last 1 firefox version",
+      "last 1 firefox s",
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:5000",
+  "proxy": "http://192.168.0.48:5000",
   "devDependencies": {
     "babel-eslint": "^10.1.0",
     "prettier-eslint": "^11.0.0"

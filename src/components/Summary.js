@@ -29,7 +29,7 @@ const Summary = ({ summary }) => {
       </div>
       <div className="ui fluid segment">
         <LifeStageChart
-          data={summary.asex_total}
+          data={summary.asex_stages}
           images={summary.asex_images}
         />
       </div>

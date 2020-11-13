@@ -1,24 +1,11 @@
-import React, { useState } from "react";
-import { CSVLink } from "react-csv";
+import React from "react";
 
-const Table = ({ dataLabels, rowData, onClick }) => {
-  const [activeRowIndex, setActiveRow] = useState(null);
-  const handleClick = (i) => {
-    setActiveRow(i);
-    if (onClick) {
-      onClick(i);
-    }
-  };
-  const handleExport = () => {
-    const exportData = rowData.map(({ plot, ...attrs }) => attrs);
-    return exportData;
-  };
-
+const Table = ({ dataLabels, rowData, onClick, activeRowIndex }) => {
   const fillRow = (row) => {
     const cells = Object.keys(dataLabels).map((label, labelIndex) => {
       return (
         <td key={labelIndex} data-label={label}>
-          {String(row[label]).replace("_", " ")}
+          {String(row[label]).replaceAll("_", " ")}
         </td>
       );
     });
@@ -34,28 +21,12 @@ const Table = ({ dataLabels, rowData, onClick }) => {
       <tr
         key={rowIndex}
         className={rowIndex === activeRowIndex ? "active" : ""}
-        onClick={() => handleClick(rowIndex)}
+        onClick={() => onClick(rowIndex)}
       >
         {fillRow(row)}
       </tr>
     );
   });
-
-  const Footer = (
-    <tfoot className="full-width">
-      <tr>
-        <th colSpan={`${Object.keys(dataLabels).length}`}>
-          <CSVLink
-            className="ui mini primary right floated button"
-            data={handleExport()}
-            filename={"export.csv"}
-          >
-            Export
-          </CSVLink>
-        </th>
-      </tr>
-    </tfoot>
-  );
 
   return (
     <table className="ui selectable celled table">
@@ -63,7 +34,6 @@ const Table = ({ dataLabels, rowData, onClick }) => {
         <tr>{Header}</tr>
       </thead>
       <tbody>{Body}</tbody>
-      {Footer}
     </table>
   );
 };

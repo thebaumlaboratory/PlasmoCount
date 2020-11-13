@@ -4,7 +4,7 @@ import Plot from "react-plotly.js";
 
 const ImageBar = (x, ind) => {
   const images = ind.map((i, key) => {
-    return <img key={key} className="ui image" src={x[i]} />;
+    return <img key={key} alt="" className="ui image" src={x[i]} />;
   });
   return (
     <div className="ui center aligned grid">
@@ -31,19 +31,18 @@ const LifeStageHist = ({ x, binSize, onClick }) => {
             },
           },
         ]}
+        useResizeHandler={true}
+        style={{ width: "100%", height: "100%" }}
         layout={{
           title: "Life stage distribution",
           autosize: true,
-          width: 520,
-          height: 400,
           margin: {
-            l: 30,
+            l: 40,
             t: 40,
-            b: 30,
-            r: 30,
+            b: 40,
+            r: 40,
           },
         }}
-        config={{ responsive: true }}
         onClick={onClick}
       />
     </div>

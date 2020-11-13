@@ -6,12 +6,11 @@ import Menu from "./components/Menu";
 
 const App = () => {
   const [Results, setResults] = useState([]);
-  const [Summary, setSummary] = useState([]);
+  const [Summary, setSummary] = useState({});
   const [Loading, setLoading] = useState(false);
 
   const onFormSubmit = (formData) => {
     if (formData) {
-      // TODO: this is currently not working
       setLoading(true);
       fetch("/model", {
         method: "POST",
@@ -53,11 +52,11 @@ const App = () => {
     <div className="ui container">
       <Menu />
       <h1 className="ui center aligned header">Malaria detection</h1>
-      <div class="ui hidden divider"></div>
+      <div className="ui hidden divider"></div>
       <Form onSubmit={onFormSubmit} loadExample={loadExample} />
-      <div class="ui hidden divider"></div>
+      <div className="ui hidden divider"></div>
       {Loading && <Loader text="Fetching results..." />}
-      {Results.length > 0 && !Loading && (
+      {Results.length > 0 && Object.keys(Summary).length > 0 && !Loading && (
         <ResultsPage
           dataLabels={dataLabels}
           values={Results}

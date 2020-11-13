@@ -26,12 +26,12 @@ const Form = (props) => {
 
   return (
     <div className="ui styled fluid accordion">
-      <div className={`${active} title`}>
+      <div className={`${active} title big`}>
         <i onClick={() => makeOpen(!isOpen)} className="dropdown icon"></i>
         Upload
         <button
           onClick={() => onLoadExample()}
-          className="ui right floated basic mini button"
+          className="mini ui right floated basic button"
         >
           Load example
         </button>
