@@ -74,4 +74,4 @@ def return_result(upload_folder='static/uploads/',
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='192.168.0.48', threaded=True)
+    app.run(debug=True, host='127.0.0.1', threaded=True)
