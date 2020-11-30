@@ -1,17 +1,17 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS, cross_origin
+
 from pathlib import Path
 import matplotlib
 import warnings
 import json
 import time
+matplotlib.use('Agg')
+warnings.filterwarnings('ignore')
+
 from model import Model
 from result import Result
 from summary import summarize
-from models.fastai_modules import ExperimentCallback, AgeModel, L1LossFlat  #TODO: this is awkward here
-
-matplotlib.use('Agg')
-warnings.filterwarnings('ignore')
 
 app = Flask(__name__)
 CORS(app, support_credentials=True)
@@ -74,4 +74,4 @@ def return_result(upload_folder='static/uploads/',
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='192.168.0.48', threaded=True)
+    app.run(debug=True, threaded=True)
