@@ -28,7 +28,7 @@ class Result:
         self.asex_digits = asex_digits
 
     def run(self, save_to):
-        save_to.mkdir()
+        save_to.mkdir(exist_ok=True)
 
         # general measures
         self.n_cells = len(self.pred)
@@ -64,7 +64,9 @@ class Result:
 
     def calc_life_stages(self, x):
         RT_cutoff, TS_cutoff = self.cutoffs
-        if (x >= 0) & (x <= RT_cutoff):
+        if not x:
+            return 'uninfected'
+        elif (x >= 0) & (x <= RT_cutoff):
             return 'ring'
         elif (x > RT_cutoff) & (x <= TS_cutoff):
             return 'trophozoite'

@@ -21,7 +21,7 @@ const Summary = ({ summary }) => {
             ["ring", "trophozoite", "schizont", "gametocyte"],
           ]}
           colors={[
-            ["#808080", "#B03060"],
+            ["#999999", "#B03060"],
             ["#f77189", "#50b131", "#3ba3ec", "#ffd92f"],
           ]}
           title="Parasitaemia"

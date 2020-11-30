@@ -1,69 +1,56 @@
 import React, { useState } from "react";
-import Form from "./components/Form";
-import ResultsPage from "./components/ResultsPage";
-import Loader from "./components/Loader";
+import Form from "./components/Form/Form";
 import Menu from "./components/Menu";
+import Results from "./components/Results/Results";
+import emailjs from "emailjs-com";
+import { BrowserRouter as Router, Route, Redirect } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 const App = () => {
-  const [Results, setResults] = useState([]);
-  const [Summary, setSummary] = useState({});
-  const [Loading, setLoading] = useState(false);
+  const [activeJob, setActiveJob] = useState(null);
 
   const onFormSubmit = (formData) => {
     if (formData) {
-      setLoading(true);
+      const jobId = uuidv4();
+      formData.append("id", jobId);
+      setActiveJob(jobId);
+
+      const email = formData.get("email-address");
+      if (email) {
+        sendEmail({
+          link: `localhost:3000/${jobId}`,
+          to_email: email,
+        });
+      }
+
       fetch("/model", {
         method: "POST",
         body: formData,
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setLoading(false);
-          setSummary(data.summary);
-          setResults(data.results);
-        });
+      });
     }
   };
 
-  const loadExample = () => {
-    setLoading(true);
-    fetch("/example", {
-      method: "POST",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setLoading(false);
-        setResults(data.results);
-        setSummary(data.summary);
-      });
-  };
-
-  const dataLabels = {
-    name: "Name",
-    n_cells: "# cells",
-    parasitemia: "Parasitaemia",
-    n_ring: "#R",
-    n_troph: "#T",
-    n_schizont: "#S",
-    n_gam: "#G",
+  const sendEmail = ({ link, to_email }) => {
+    emailjs.send(
+      "service_izg1wij",
+      "template_0v18rqj",
+      { link, to_email },
+      "user_h9QYUT944PSMCm6whGO0Z"
+    );
   };
 
   return (
-    <div className="ui container">
-      <Menu />
-      <h1 className="ui center aligned header">Malaria detection</h1>
-      <div className="ui hidden divider"></div>
-      <Form onSubmit={onFormSubmit} loadExample={loadExample} />
-      <div className="ui hidden divider"></div>
-      {Loading && <Loader text="Fetching results..." />}
-      {Results.length > 0 && Object.keys(Summary).length > 0 && !Loading && (
-        <ResultsPage
-          dataLabels={dataLabels}
-          values={Results}
-          summary={Summary}
-        />
-      )}
-    </div>
+    <Router>
+      {activeJob && <Redirect to={`/${activeJob}`} />}
+      <div className="ui container">
+        <Menu />
+        <h1 className="ui center aligned header">PlasmoCount</h1>
+        <div className="ui hidden divider"></div>
+        <Form onSubmit={onFormSubmit} />
+        <div className="ui hidden divider"></div>
+        <Route path="/:id" exact component={Results} />
+      </div>
+    </Router>
   );
 };
 

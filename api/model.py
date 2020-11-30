@@ -12,6 +12,7 @@ from scipy import stats
 
 class Model:
     def __init__(self,
+                 has_gams=True,
                  model_path='./models',
                  od_model='faster-rcnn.pt',
                  class_model='class_resnet.pkl',
@@ -25,6 +26,7 @@ class Model:
         self.class_model = load_learner(path=model_path, file=class_model)
         self.ls_model = load_learner(path=model_path, file=ls_model)
         self.gam_model = load_learner(path=model_path, file=gam_model)
+        self.has_gams = has_gams
 
     def load_image(self, fileName):
         self.fileName = fileName
@@ -45,11 +47,14 @@ class Model:
                 bbox_img = Image(self.img[:, y0:y1, x0:x1])
                 bbox_pred = self.class_model.predict(bbox_img)
                 if str(bbox_pred[0]) == 'infected':
-                    gam_pred = self.gam_model.predict(bbox_img)
-                    if str(gam_pred[0]) == 'asexual':
-                        ls_pred = self.ls_model.predict(bbox_img)
+                    if self.has_gams:
+                        gam_pred = self.gam_model.predict(bbox_img)
+                        if str(gam_pred[0]) == 'asexual':
+                            ls_pred = self.ls_model.predict(bbox_img)
+                        else:
+                            ls_pred = [FloatItem(-1)]
                     else:
-                        ls_pred = [FloatItem(-1)]
+                        ls_pred = self.ls_model.predict(bbox_img)
                     life_stages.append(ls_pred)
                 else:
                     life_stages.append(None)
@@ -69,7 +74,7 @@ class Model:
 
     def post_processing(self,
                         pred,
-                        score_thresh=0.75,
+                        score_thresh=0.95,
                         iou_thresh=0.5,
                         z_thresh=4):
         pred = self.apply_score_filter(pred, score_thresh)

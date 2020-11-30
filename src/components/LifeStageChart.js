@@ -1,84 +1,40 @@
-import React, { useState } from "react";
-import { Slider } from "react-semantic-ui-range";
-import Plot from "react-plotly.js";
+import React from "react";
+import { Bar } from "react-chartjs-2";
 
-const ImageBar = (x, ind) => {
-  const images = ind.map((i, key) => {
-    return <img key={key} alt="" className="ui image" src={x[i]} />;
-  });
-  return (
-    <div className="ui center aligned grid">
-      <div className="ui mini images">{images}</div>
-    </div>
-  );
-};
-
-const LifeStageHist = ({ x, binSize, onClick }) => {
+const Chart = (data) => {
+  console.log(data);
+  let labels = [];
+  let values = [];
+  for (var d in data.data) {
+    values.push(parseFloat(d));
+    labels.push(data.data[d][0]);
+  }
+  const barData = {
+    labels: labels,
+    datasets: [
+      {
+        label: "Life stage",
+        data: values,
+        backgroundColor: "rgba(14,110,184,0.2)",
+        borderColor: "rgba(14,110,184,1)",
+        borderWidth: 1,
+        hoverBackgroundColor: "rgba(14,110,184,0.4)",
+        hoverBorderColor: "rgba(14,110,184,1)",
+      },
+    ],
+  };
   return (
     <div>
-      <Plot
-        data={[
-          {
-            type: "histogram",
-            x: x,
-            xbins: {
-              end: 4,
-              size: binSize,
-              start: 0.5,
-            },
-            marker: {
-              color: "#B03060",
-            },
-          },
-        ]}
-        useResizeHandler={true}
-        style={{ width: "100%", height: "100%" }}
-        layout={{
-          title: "Life stage distribution",
-          autosize: true,
-          margin: {
-            l: 40,
-            t: 40,
-            b: 40,
-            r: 40,
-          },
+      <Bar
+        data={barData}
+        width={100}
+        height={50}
+        options={{
+          maintainAspectRatio: true,
         }}
-        onClick={onClick}
       />
     </div>
   );
 };
 
-const LifeStageChart = ({ data, images }) => {
-  const [activePoints, changeActivePoints] = useState(null);
-  const [binSize, changeBinSize] = useState(0.25);
-  const settings = {
-    min: 0,
-    max: 1,
-    step: 0.01,
-    onChange: (value) => {
-      changeBinSize(value);
-      changeActivePoints(null);
-    },
-  };
-  const handleClick = (data) => {
-    changeActivePoints(data.points[0].pointNumbers);
-  };
-  return (
-    <div>
-      <LifeStageHist x={data} onClick={handleClick} binSize={binSize} />
-      <div className="ui basic segment">
-        Bin size: {binSize}
-        <Slider value={binSize} color="red" settings={settings} />
-      </div>
-      <div className="ui basic segment">
-        {activePoints &&
-          activePoints.length > 0 &&
-          ImageBar(images, activePoints)}
-      </div>
-      <br />
-    </div>
-  );
-};
-
-export default LifeStageChart;
+export default Chart;

@@ -1,7 +1,10 @@
 import "./Form.css";
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Form = (props) => {
+  const [emailAddress, setEmailAddress] = useState("");
+  const [hasGams, setGams] = useState(false);
   const [files, setFiles] = useState(null);
   const [isOpen, makeOpen] = useState(true);
   const active = isOpen ? "active" : "";
@@ -15,13 +18,10 @@ const Form = (props) => {
     for (const file in files) {
       formData.append(file, files[file]);
     }
+    formData.append("email-address", emailAddress);
+    formData.append("has-gams", hasGams);
     makeOpen(false);
     props.onSubmit(formData);
-  };
-
-  const onLoadExample = () => {
-    makeOpen(false);
-    props.loadExample();
   };
 
   return (
@@ -31,28 +31,51 @@ const Form = (props) => {
           <i onClick={() => makeOpen(!isOpen)} className="dropdown icon"></i>
           Upload
         </span>
-        <button
-          onClick={() => onLoadExample()}
+        <Link
+          to="/example"
+          onClick={() => makeOpen(false)}
           className="ui mini right floated basic button"
         >
           Load example
-        </button>
+        </Link>
       </div>
       <div className={`${active} content`}>
         <form onSubmit={onFormSubmit} className="ui form">
           <div className="field">
-            <label>Email address</label>
+            <label>
+              Email address&nbsp;
+              <span
+                data-tooltip="We will send you an email once your results are ready."
+                data-variation="mini"
+              >
+                <i className="info circle icon"></i>
+              </span>
+            </label>
             <input
               type="text"
               name="email-address"
               placeholder="Email address"
+              onChange={(e) => setEmailAddress(e.target.value)}
+              value={emailAddress}
             />
           </div>
           <div className="field">
             <label>Malaria Species</label>
-            <select className="ui fluid dropdown">
-              <option value="falciparum">Plasmodium falciparum</option>
+            <select className="ui fluid disabled dropdown">
+              <option value="falciparum" placeholder="Plasmodium falciparum">
+                Plasmodium falciparum
+              </option>
             </select>
+          </div>
+          <div className="field">
+            <div className="ui checkbox">
+              <input
+                type="checkbox"
+                checked={hasGams}
+                onChange={() => setGams(!hasGams)}
+              />
+              <label>Contains gametocytes (beta)</label>
+            </div>
           </div>
           <div className="field">
             <label>Giemsa stain images</label>
@@ -62,11 +85,6 @@ const Form = (props) => {
               multiple
             />
             <div className="description">.tiff, .jpg, .png accepted</div>
-          </div>
-          <div className="field">
-            <label>Metadata (optional)</label>
-            <input type="file" />
-            <div className="description">.csv, .xls(x) accepted</div>
           </div>
           <div className="field">
             <div className="ui checkbox">
