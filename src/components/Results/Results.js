@@ -12,7 +12,7 @@ const Results = (props) => {
 
   useEffect(() => {
     const loadResults = () => {
-      fetch("/result", {
+      fetch("/api/result", {
         method: "POST",
         body: JSON.stringify({ id: jobId }),
         headers: new Headers({

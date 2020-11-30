@@ -18,12 +18,12 @@ const App = () => {
       const email = formData.get("email-address");
       if (email) {
         sendEmail({
-          link: `localhost:3000/${jobId}`,
+          link: `localhost:3000/api/${jobId}`,
           to_email: email,
         });
       }
 
-      fetch("/model", {
+      fetch("/api/model", {
         method: "POST",
         body: formData,
       });

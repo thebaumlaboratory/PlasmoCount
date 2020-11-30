@@ -17,7 +17,7 @@ app = Flask(__name__)
 CORS(app, support_credentials=True)
 
 
-@app.route('/model', methods=['POST'])
+@app.route('/api/model', methods=['POST'])
 def run_model(upload_folder='static/uploads/'):
     job_id = request.form['id']
     upload_folder = Path(upload_folder) / job_id
@@ -56,7 +56,7 @@ def run_model(upload_folder='static/uploads/'):
     return output
 
 
-@app.route('/result', methods=['POST'])
+@app.route('/api/result', methods=['POST'])
 def return_result(upload_folder='static/uploads/',
                   example_folder='static/example'):
     job_id = request.get_json()['id']
