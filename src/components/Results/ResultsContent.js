@@ -72,7 +72,7 @@ const ResultsContent = ({ values, summary }) => {
     <div className="ui stackable two column grid">
       <div className="column">
         <CSVLink
-          filename={"malaria_detection.csv"}
+          filename={"PlasmoCount.csv"}
           data={handleExport()}
           headers={exportHeaders}
           className="ui fluid segment primary button"
