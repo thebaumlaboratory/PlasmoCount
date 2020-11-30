@@ -8,7 +8,6 @@ import time
 from model import Model
 from result import Result
 from summary import summarize
-from models.fastai_modules import ExperimentCallback, AgeModel, L1LossFlat  #TODO: this is awkward here
 
 matplotlib.use('Agg')
 warnings.filterwarnings('ignore')
