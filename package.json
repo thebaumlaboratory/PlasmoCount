@@ -47,7 +47,7 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://192.168.0.48:5000",
+  "proxy": "http://localhost:5000",
   "devDependencies": {
     "babel-eslint": "^10.1.0",
     "prettier-eslint": "^11.0.0"
