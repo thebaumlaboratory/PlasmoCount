@@ -1,4 +1,4 @@
-from viz import plot_labels, make_crop
+from programs.viz import plot_labels, make_crop
 import pandas as pd
 from pathlib import Path
 import time

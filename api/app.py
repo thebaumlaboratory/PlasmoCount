@@ -9,9 +9,9 @@ import time
 matplotlib.use('Agg')
 warnings.filterwarnings('ignore')
 
-from model import Model
-from result import Result
-from summary import summarize
+from programs.model import Model
+from programs.result import Result
+from programs.summarize import summarize
 
 app = Flask(__name__, static_folder='../build', static_url_path='/')
 UPLOAD_FOLDER = 'uploads/'
