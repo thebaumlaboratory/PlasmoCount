@@ -7,10 +7,10 @@ const Menu = () => {
       <Link className="header item" to="/">
         PlasmoCount
       </Link>
-      <Link className="active item" to="/">
+      <Link className="item" to="/">
         Home
       </Link>
-      <Link className="item" to="/">
+      <Link className="item" to="/pages/about">
         About
       </Link>
       <div className="right menu">
