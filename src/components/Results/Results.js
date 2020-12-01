@@ -48,7 +48,7 @@ const Results = (props) => {
       {Loading ? (
         <Loader text="Fetching results..." />
       ) : (
-        <ResultsContent values={Results} summary={Summary} />
+        <ResultsContent jobId={jobId} values={Results} summary={Summary} />
       )}
     </div>
   );

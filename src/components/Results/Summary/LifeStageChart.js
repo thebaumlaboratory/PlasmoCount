@@ -2,9 +2,12 @@ import React, { useState } from "react";
 import { Slider } from "react-semantic-ui-range";
 import Plot from "react-plotly.js";
 
-const ImageBar = (x, ind) => {
+const ImageBar = (jobId, x, ind) => {
+  const endPoint = jobId === "example" ? "api/example" : `api/uploads/${jobId}`;
   const images = ind.map((i, key) => {
-    return <img key={key} alt="" className="ui image" src={x[i]} />;
+    return (
+      <img key={key} alt="" className="ui image" src={`${endPoint}/${x[i]}`} />
+    );
   });
   return (
     <div className="ui center aligned grid">
@@ -13,7 +16,7 @@ const ImageBar = (x, ind) => {
   );
 };
 
-const LifeStageHist = ({ x, binSize, onClick, onDoubleClick }) => {
+const LifeStageHist = ({ x, binSize, onClick, onDoubleClick, job }) => {
   return (
     <div>
       <Plot
@@ -50,7 +53,7 @@ const LifeStageHist = ({ x, binSize, onClick, onDoubleClick }) => {
   );
 };
 
-const LifeStageChart = ({ data, images }) => {
+const LifeStageChart = ({ jobId, data, images }) => {
   const [activePoints, changeActivePoints] = useState(null);
   const [binSize, changeBinSize] = useState(0.25);
   const settings = {
@@ -83,7 +86,7 @@ const LifeStageChart = ({ data, images }) => {
       <div className="ui basic segment">
         {activePoints &&
           activePoints.length > 0 &&
-          ImageBar(images, activePoints)}
+          ImageBar(jobId, images, activePoints)}
       </div>
       <br />
     </div>
