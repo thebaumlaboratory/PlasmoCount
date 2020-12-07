@@ -4,6 +4,7 @@ import Plot from "react-plotly.js";
 
 const ImageBar = (jobId, x, ind) => {
   const endPoint = jobId === "example" ? "api/example" : `api/uploads/${jobId}`;
+  // for production: https://storage.googleapis.com/plasmocount-bucket/${jobId}
   const images = ind.map((i, key) => {
     return (
       <img key={key} alt="" className="ui image" src={`${endPoint}/${x[i]}`} />

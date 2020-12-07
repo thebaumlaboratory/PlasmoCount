@@ -13,7 +13,7 @@ from programs.model import Model
 from programs.result import Result
 from programs.summarize import summarize
 
-app = Flask(__name__, static_folder='static', static_url_path='/')
+app = Flask(__name__, static_folder='../build', static_url_path='/')
 UPLOAD_FOLDER = 'uploads/'
 EXAMPLE_FOLDER = 'example/'
 CORS(app, support_credentials=True)
