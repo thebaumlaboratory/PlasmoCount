@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Form from "./components/Form/Form";
 import Menu from "./components/Menu";
+import About from "./components/About";
 import Results from "./components/Results/Results";
 import emailjs from "emailjs-com";
 import { BrowserRouter as Router, Route, Redirect } from "react-router-dom";
@@ -46,7 +47,12 @@ const App = () => {
         <Menu />
         <h1 className="ui center aligned header">PlasmoCount</h1>
         <div className="ui hidden divider"></div>
-        <Form onSubmit={onFormSubmit} />
+        <Route
+          path={["/", "/:id"]}
+          exact
+          render={(props) => <Form {...props} onSubmit={onFormSubmit} />}
+        />
+        <Route path="/pages/about" exact component={About} />
         <div className="ui hidden divider"></div>
         <Route path="/:id" exact component={Results} />
       </div>

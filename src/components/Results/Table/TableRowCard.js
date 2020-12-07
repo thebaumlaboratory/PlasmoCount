@@ -1,10 +1,12 @@
 import React from "react";
 
-const TableRowCard = ({ data }) => {
+const TableRowCard = ({ jobId, data }) => {
+  const endPoint = jobId === "example" ? "api/example" : `api/uploads/${jobId}`;
+  // for production: https://storage.googleapis.com/plasmocount-bucket/${jobId}
   return (
     <div className="ui fluid card">
       <div className="image">
-        <img alt={`Malaria detection of ${data.name}`} src={data.plot} />
+        <img alt={data.name} src={`${endPoint}/${data.plot}`} />
       </div>
     </div>
   );

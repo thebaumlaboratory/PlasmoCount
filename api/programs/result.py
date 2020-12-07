@@ -1,5 +1,6 @@
-from viz import plot_labels, make_crop
+from programs.viz import plot_labels, make_crop
 import pandas as pd
+from pathlib import Path
 import time
 
 
@@ -27,8 +28,9 @@ class Result:
         self.cutoffs = cutoffs
         self.asex_digits = asex_digits
 
-    def run(self, save_to):
-        save_to.mkdir(exist_ok=True)
+    def run(self, upload_folder):
+        self.path = upload_folder / self.id
+        self.path.mkdir(exist_ok=True)
 
         # general measures
         self.n_cells = len(self.pred)
@@ -40,10 +42,11 @@ class Result:
         self.pred['life_stage_c'] = self.pred['life_stage'].apply(
             lambda x: self.calc_life_stages(x))
         self.life_stage_counts = self.pred['life_stage_c'].value_counts()
-        self.asex = self.get_asexuals(save_to)
+        self.asex = self.get_asexuals(upload_folder)
 
         # plotting
-        self.plot = self.plot_prediction(save_to=save_to / 'full.png')
+        self.plot = Path(self.id) / 'full.png'
+        self.plot_prediction(save_to=upload_folder / self.plot)
 
     def to_output(self):
         return {
@@ -86,13 +89,14 @@ class Result:
         self.parasitemia = round(self.n_infected / self.n_cells, 2)
 
     def get_asexuals(self,
-                     save_to,
+                     upload_folder,
                      stages=['ring', 'trophozoite', 'schizont']):
         asex = self.pred.loc[self.pred['life_stage_c'].isin(
             stages)].reset_index()
-        asex['filename'] = asex['index'].apply(lambda x: str(save_to /
-                                                             ('%s.png' % x)))
-        asex.apply(lambda x: make_crop(self.img, x['boxes'], x['filename']),
+        asex['filename'] = asex['index'].apply(
+            lambda x: str(Path(self.id) / ('%s.png' % x)))
+        asex.apply(lambda x: make_crop(self.img, x['boxes'], upload_folder / x[
+            'filename']),
                    axis=1)
         asex.sort_values('life_stage', inplace=True)
         asex['life_stage'] = asex['life_stage'].apply(

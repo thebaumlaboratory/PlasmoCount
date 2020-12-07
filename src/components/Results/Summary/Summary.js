@@ -2,7 +2,7 @@ import React from "react";
 import LifeStageChart from "./LifeStageChart";
 import PieChart from "./PieChart";
 
-const Summary = ({ summary }) => {
+const Summary = ({ jobId, summary }) => {
   return (
     <div>
       <div className="ui fluid segment">
@@ -29,6 +29,7 @@ const Summary = ({ summary }) => {
       </div>
       <div className="ui fluid segment">
         <LifeStageChart
+          jobId={jobId}
           data={summary.asex_stages}
           images={summary.asex_images}
         />

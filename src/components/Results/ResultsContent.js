@@ -5,7 +5,7 @@ import Summary from "./Summary/Summary";
 import { CSVLink } from "react-csv";
 import TablePagination from "./Table/TablePagination";
 
-const ResultsContent = ({ values, summary }) => {
+const ResultsContent = ({ jobId, values, summary }) => {
   const mobileDim = 768; // based on Semantic UI
   const [activeRowIndex, setActiveRowIndex] = useState(null);
   const [activePage, setActivePage] = useState(1);
@@ -79,7 +79,7 @@ const ResultsContent = ({ values, summary }) => {
         >
           Export
         </CSVLink>
-        <Summary summary={summary} />
+        <Summary jobId={jobId} summary={summary} />
       </div>
       <div className="column">
         <Table
@@ -95,7 +95,9 @@ const ResultsContent = ({ values, summary }) => {
             totalPages={Math.ceil(values.length / maxRows)}
           />
         </div>
-        {activeRowIndex != null && <TableRowCard data={activeImage} />}
+        {activeRowIndex != null && (
+          <TableRowCard jobId={jobId} data={activeImage} />
+        )}
       </div>
     </div>
   );
