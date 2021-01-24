@@ -24,8 +24,8 @@ const Results = (props) => {
           if (!data.statusOK) {
             return;
           }
-          setSummary(data.results.summary);
-          setResults(data.results.results);
+          setSummary(data.data.summary);
+          setResults(data.data.results);
           setLoading(false);
         });
     };

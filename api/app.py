@@ -70,7 +70,7 @@ def run(upload_folder=UPLOAD_FOLDER):
         results.append(result.to_output())
 
     output = {
-        'results': {
+        'data': {
             'summary': summarize(results),
             'results': results
         },
