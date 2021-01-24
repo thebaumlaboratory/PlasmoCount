@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 const Form = (props) => {
   const [emailAddress, setEmailAddress] = useState("");
   const [hasGams, setGams] = useState(false);
+  const [dataContrib, setDataContrib] = useState(true);
   const [files, setFiles] = useState(null);
   const [isOpen, makeOpen] = useState(true);
   const active = isOpen ? "active" : "";
@@ -15,11 +16,15 @@ const Form = (props) => {
       return;
     }
     let formData = new FormData();
+    const timestamp = Date.now();
+    const date = new Date(timestamp);
     for (const file in files) {
       formData.append(file, files[file]);
     }
     formData.append("email-address", emailAddress);
     formData.append("has-gams", hasGams);
+    formData.append("data-contrib", dataContrib);
+    formData.append("date", date.toISOString());
     makeOpen(false);
     props.onSubmit(formData);
   };
@@ -88,7 +93,11 @@ const Form = (props) => {
           </div>
           <div className="field">
             <div className="ui checkbox">
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={dataContrib}
+                onChange={() => setDataContrib(!dataContrib)}
+              />
               <label>
                 I'd like to contribute my data to improve this website.
               </label>
