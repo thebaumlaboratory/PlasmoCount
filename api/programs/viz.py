@@ -59,4 +59,4 @@ def plot_labels(img,
 def make_crop(img, bbox, save_to):
     img = transforms.ToPILImage()(img).convert("RGB")
     crop = img.crop(bbox)
-    crop.save(save_to)
+    crop.save(save_to, 'PNG')
