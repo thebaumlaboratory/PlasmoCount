@@ -15,8 +15,9 @@ from programs.result import Result
 from programs.summarize import summarize
 
 app = Flask(__name__, static_folder='../build', static_url_path='/')
-UPLOAD_FOLDER = 'uploads/'
-EXAMPLE_FOLDER = 'example/'
+app.config.from_object('config')
+UPLOAD_FOLDER = app.config['UPLOAD_FOLDER']
+EXAMPLE_FOLDER = app.config['EXAMPLE_FOLDER']
 CORS(app, support_credentials=True)
 
 
