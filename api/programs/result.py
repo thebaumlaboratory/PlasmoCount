@@ -11,6 +11,7 @@ class Result:
             fname,
             img,
             pred,
+            n_digits=2,
             color_dict={
                 'uninfected': '#808080',
                 'ring': '#f77189',
@@ -18,29 +19,31 @@ class Result:
                 'schizont': '#3ba3ec',
                 'gametocyte': '#ffd92f'
             },
-            cutoffs=[1.5, 2.5],
-            asex_digits=2):
+            cutoffs=[1.5, 2.5]):
         self.id = id
         self.fname = fname
         self.img = img
         self.pred = pred
+        self.n_digits = n_digits
         self.color_dict = color_dict
         self.cutoffs = cutoffs
-        self.asex_digits = asex_digits
+
+    def __len__(self):
+        return len(self.pred)
 
     def run(self, upload_folder):
         self.path = upload_folder / self.id
         self.path.mkdir(exist_ok=True)
 
-        # general measures
-        self.n_cells = len(self.pred)
-
         # infected cells
-        self.calc_parasitaemia()
+        self.counts = self.pred['classes'].value_counts()
+        self.n_infected = self.counts[
+            'infected'] if 'infected' in self.counts.keys() else 0
+        self.n_uninfected = self.counts[
+            'uninfected'] if 'uninfected' in self.counts.keys() else 0
+        self.parasitemia = round(self.n_infected / len(self), self.n_digits)
 
         # life stages
-        self.pred['life_stage_c'] = self.pred['life_stage'].apply(
-            lambda x: self.calc_life_stages(x))
         self.life_stage_counts = self.pred['life_stage_c'].value_counts()
         self.asex = self.get_asexuals(upload_folder)
 
@@ -52,7 +55,7 @@ class Result:
         return {
             'id': int(self.id),
             'name': str(self.fname),
-            'n_cells': int(self.n_cells),
+            'n_cells': int(len(self)),
             'n_infected': int(self.n_infected),
             'n_uninfected': int(self.n_uninfected),
             'parasitemia': float(self.parasitemia),
@@ -64,29 +67,6 @@ class Result:
             'asex_stages': list(self.asex['life_stage']),
             'asex_images': list(self.asex['filename'])
         }
-
-    def calc_life_stages(self, x):
-        RT_cutoff, TS_cutoff = self.cutoffs
-        if not x:
-            return 'uninfected'
-        elif (x >= 0) & (x <= RT_cutoff):
-            return 'ring'
-        elif (x > RT_cutoff) & (x <= TS_cutoff):
-            return 'trophozoite'
-        elif (x > TS_cutoff):
-            return 'schizont'
-        elif (x == -1):
-            return 'gametocyte'
-        else:
-            return 'uninfected'
-
-    def calc_parasitaemia(self):
-        self.counts = self.pred['classes'].value_counts()
-        self.n_infected = self.counts[
-            'infected'] if 'infected' in self.counts.keys() else 0
-        self.n_uninfected = self.counts[
-            'uninfected'] if 'uninfected' in self.counts.keys() else 0
-        self.parasitemia = round(self.n_infected / self.n_cells, 2)
 
     def get_asexuals(self,
                      upload_folder,
@@ -100,7 +80,7 @@ class Result:
                    axis=1)
         asex.sort_values('life_stage', inplace=True)
         asex['life_stage'] = asex['life_stage'].apply(
-            lambda x: round(x, self.asex_digits))
+            lambda x: round(x, self.n_digits))
         return asex[['filename', 'life_stage']]
 
     def plot_prediction(self, save_to, **kwargs):
