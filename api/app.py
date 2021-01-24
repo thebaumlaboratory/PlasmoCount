@@ -41,19 +41,25 @@ def download_example(filename):
 
 
 @app.route('/api/model', methods=['POST'])
-def run_model(upload_folder=UPLOAD_FOLDER):
-    job_id = request.form['id']
+def run(upload_folder=UPLOAD_FOLDER):
+    job = {
+        'id': request.form.get('id'),
+        'date': request.form.get('date'),
+        'email-address': request.form.get('email-address'),
+        'has-gams': request.form.get('has-gams') == 'true',
+        'data-contrib': request.form.get('data-contrib') == 'true',
+        'cut-offs': [1.5, 2.5]
+    }
+
     upload_folder = Path(upload_folder)
-    job_folder = upload_folder / job_id
+    job_folder = upload_folder / job['id']
     job_folder.mkdir(exist_ok=True)
 
     # get files
     files = request.files
 
     # load model
-    has_gams = request.form.get('has-gams') == 'true'
-    model = Model(has_gams=has_gams)
-
+    model = Model(has_gams=job['has-gams'])
     results = []
     for i in files:
         # load result
@@ -63,12 +69,9 @@ def run_model(upload_folder=UPLOAD_FOLDER):
         result.run(upload_folder=job_folder)
         results.append(result.to_output())
 
-    #get summary statistics
-    summary = summarize(results)
-
     output = {
         'results': {
-            'summary': summary,
+            'summary': summarize(results),
             'results': results
         },
         'statusOK': True
@@ -95,4 +98,4 @@ def return_result(upload_folder=UPLOAD_FOLDER, example_folder=EXAMPLE_FOLDER):
 
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8080, threaded=True, debug=False)
+    app.run(debug=True)
