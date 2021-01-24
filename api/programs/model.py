@@ -17,7 +17,8 @@ class Model:
                  od_model='faster-rcnn.pt',
                  class_model='class_resnet.pkl',
                  ls_model='ls_resnet.pkl',
-                 gam_model='gam_resnet.pkl'):
+                 gam_model='gam_resnet.pkl',
+                 cutoffs=[1.5, 2.5]):
         model_path = Path(model_path)
         device = torch.device(
             'cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -27,6 +28,7 @@ class Model:
         self.ls_model = load_learner(path=model_path, file=ls_model)
         self.gam_model = load_learner(path=model_path, file=gam_model)
         self.has_gams = has_gams
+        self.cutoffs = cutoffs
 
     def load_image(self, fileName):
         self.fileName = fileName
@@ -61,20 +63,23 @@ class Model:
                 classes.append(bbox_pred)
 
         # format predictions
-        prediction['boxes'] = prediction['boxes'].tolist()
-        classes = pd.Series(classes)
-        prediction['classes'] = classes.apply(lambda x: str(x[0]))
-        prediction['p_classes'] = classes.apply(lambda x: x[2][x[1]])
-        life_stages = pd.Series(life_stages)
-        prediction['life_stage'] = life_stages.apply(
+        result = {}
+        result['boxes'] = pd.Series(prediction['boxes'].tolist())
+        result['p_boxes'] = pd.Series(prediction['scores'].tolist())
+        result = pd.DataFrame.from_dict(result)
+        result[['classes', 'p_classes']] = pd.Series(classes).apply(
+            lambda x: pd.Series([str(x[0]), (x[2][x[1]]).item()]))
+        result['life_stage'] = pd.Series(life_stages).apply(
             lambda x: float(x[0].data) if x is not None else None)
-        pred_df = pd.DataFrame.from_dict(prediction,
-                                         orient='index').transpose()
-        return pred_df
+        result['life_stage_c'] = result['life_stage'].apply(
+            lambda x: self.calc_life_stages(x))
+
+        return result
+        
 
     def post_processing(self,
                         pred,
-                        score_thresh=0.95,
+                        score_thresh=0.9,
                         iou_thresh=0.5,
                         z_thresh=4):
         pred = self.apply_score_filter(pred, score_thresh)
@@ -104,3 +109,18 @@ class Model:
         for i in ["boxes", "labels", "scores"]:
             pred[i] = pred[i][idx]
         return pred
+    
+    def calc_life_stages(self, x):
+        RT_cutoff, TS_cutoff = self.cutoffs
+        if not x:
+            return 'uninfected'
+        elif (x >= 0) & (x <= RT_cutoff):
+            return 'ring'
+        elif (x > RT_cutoff) & (x <= TS_cutoff):
+            return 'trophozoite'
+        elif (x > TS_cutoff):
+            return 'schizont'
+        elif (x == -1):
+            return 'gametocyte'
+        else:
+            return 'uninfected'
