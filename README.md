@@ -17,10 +17,10 @@ PlasmoCount is built on a Flask framework with ReactJS for front-end development
 
 Start the production build of the React app, by running `yarn build`.
 Then run the Flask server with `yarn start-api`.
-Navigate to port 5000 to starting using PlasmoCount.
+Navigate to [port 5000](http://localhost:5000) to starting using PlasmoCount.
 
 #### Development
 
-If you would like to work on the user interface, you can start the React development server with `yarn start`. You can then navigate to port 3000 to track your file changes in the development environment.
+If you would like to work on the user interface, you can start the React development server with `yarn start`. You can then navigate to [port 3000](http://localhost:3000) to track your file changes in the development environment.
 
 For questions or more information, please contact [the Baum lab](https://baumlab.com).
