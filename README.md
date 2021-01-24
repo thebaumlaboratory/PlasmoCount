@@ -1,31 +1,26 @@
-# PlasmoCount
+# PlasmoCount: automated detection and staging of malaria parasites from cytological smears
 
-## Development
+PlasmoCount is an ML tool for the automated detection and staging of malaria parasites in Giemsa-stained thin blood smears. PlasmoCount uses a collection of ResNets for the detection of individual red blood cells (RBCs), classification of infection, and continuous staging of the asexual development of the parasite. You can access PlasmoCount's prototype on www.plasmocount.org (password for access available on request) or run it locally following the steps below.
 
-The React server runs on port `3000` and starts with:
+### Requirements
 
-```
-yarn start
-```
+PlasmoCount is built on a Flask framework with ReactJS for front-end development. You will need the following three packages installed: Python, Yarn, and Node.js. Make sure you install all Python and Node dependencies. You will also need to create an uploads folder and specify its path in the Flask config file.
 
-The Flask server runs on port `5000` and starts with:
+### Contents
 
-```
-cd api
-flask run
-```
+- `src/`: contains all the dynamic components in React.
+- `api/`: contains the Flask project.
+- `api/app.py`: contains all API endpoints.
+- `api/models/`: stores all the ML models.
 
-## Deployment
+### Starting up the server
 
-You can run the app on a single server for testing by compiling the front-end:
+Start the production build of the React app, by running `yarn build`.
+Then run the Flask server with `yarn start-api`.
+Navigate to port 5000 to starting using PlasmoCount.
 
-```
-yarn build
-```
+#### Development
 
-The self-contained app then runs on port `5000` with:
+If you would like to work on the user interface, you can start the React development server with `yarn start`. You can then navigate to port 3000 to track your file changes in the development environment.
 
-```
-cd api
-flask run
-```
+For questions or more information, please contact [the Baum lab](https://baumlab.com).
