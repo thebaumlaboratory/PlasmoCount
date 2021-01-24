@@ -7,7 +7,6 @@ chardet==3.0.4
 click==7.1.2
 cycler==0.10.0
 cymem==2.0.4
-dataclasses==0.8
 fastai==1.0.60
 fastprogress==1.0.0
 ffmpeg-python==0.2.0
