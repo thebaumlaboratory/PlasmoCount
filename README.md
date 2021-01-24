@@ -4,7 +4,7 @@ PlasmoCount is an ML tool for the automated detection and staging of malaria par
 
 ### Requirements
 
-PlasmoCount is built on a Flask framework with ReactJS for front-end development. You will need the following three packages installed: Python, Yarn, and Node.js. Make sure you install all Python and Node dependencies. You will also need to create an uploads folder and specify its path in the Flask config file.
+PlasmoCount is built on a Flask framework with ReactJS for front-end development. You will need the following three packages installed: Python, Yarn, and Node.js. Before you start, make sure you install all Python and Node dependencies. You will also need to create an uploads folder and specify its path in the Flask config file. Finally, download the models using `git lfs pull`.
 
 ### Contents
 
@@ -22,5 +22,7 @@ Navigate to [port 5000](http://localhost:5000) to starting using PlasmoCount.
 #### Development
 
 If you would like to work on the user interface, you can start the React development server with `yarn start`. You can then navigate to [port 3000](http://localhost:3000) to track your file changes in the development environment.
+
+Please note that in this local version, all form inputs except for the uploaded files are disabled.
 
 For questions or more information, please contact [the Baum lab](https://baumlab.com).
