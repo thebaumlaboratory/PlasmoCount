@@ -75,7 +75,6 @@ class Model:
             lambda x: self.calc_life_stages(x))
 
         return result
-        
 
     def post_processing(self,
                         pred,
@@ -109,7 +108,7 @@ class Model:
         for i in ["boxes", "labels", "scores"]:
             pred[i] = pred[i][idx]
         return pred
-    
+
     def calc_life_stages(self, x):
         RT_cutoff, TS_cutoff = self.cutoffs
         if not x:

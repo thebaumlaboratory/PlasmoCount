@@ -46,7 +46,7 @@ const Form = (props) => {
       </div>
       <div className={`${active} content`}>
         <form onSubmit={onFormSubmit} className="ui form">
-          <div className="disabled field">
+          <div className="field">
             <label>
               Email address&nbsp;
               <span
@@ -91,7 +91,7 @@ const Form = (props) => {
             />
             <div className="description">.tiff, .jpg, .png accepted</div>
           </div>
-          <div className="disabled field">
+          <div className="field">
             <div className="ui checkbox">
               <input
                 type="checkbox"

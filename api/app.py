@@ -1,12 +1,16 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, render_template, send_from_directory
 from flask_cors import CORS, cross_origin
+from flask_basicauth import BasicAuth
+from werkzeug.utils import secure_filename
+from google.cloud import storage
 
+import os
+from collections import defaultdict
 from pathlib import Path
 import matplotlib
 import warnings
 import json
 import time
-
 matplotlib.use('Agg')
 warnings.filterwarnings('ignore')
 
@@ -16,9 +20,23 @@ from programs.summarize import summarize
 
 app = Flask(__name__, static_folder='../build', static_url_path='/')
 app.config.from_object('config')
-UPLOAD_FOLDER = app.config['UPLOAD_FOLDER']
-EXAMPLE_FOLDER = app.config['EXAMPLE_FOLDER']
+basic_auth = BasicAuth(app)
 CORS(app, support_credentials=True)
+
+
+def upload_to_cloud(file, fname, content_type, **kwargs):
+    gcs = storage.Client()
+    bucket = gcs.get_bucket(app.config['CLOUD_STORAGE_BUCKET'])
+    blob = bucket.blob(fname)
+    blob.upload_from_string(file, content_type, **kwargs)
+
+
+def read_from_cloud(fname):
+    gcs = storage.Client()
+    bucket = gcs.get_bucket(app.config['CLOUD_STORAGE_BUCKET'])
+    blob = bucket.get_blob(fname)
+    if not blob: return None
+    return blob.download_as_string()
 
 
 @app.errorhandler(404)
@@ -31,72 +49,90 @@ def index():
     return app.send_static_file('index.html')
 
 
-@app.route('/api/uploads/<path:filename>')
-def download_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
-
-
 @app.route('/api/example/<path:filename>')
 def download_example(filename):
-    return send_from_directory(EXAMPLE_FOLDER, filename)
+    return send_from_directory(app.config['EXAMPLE_FOLDER'], filename)
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_FILE_EXTENSIONS']
 
 
 @app.route('/api/model', methods=['POST'])
-def run(upload_folder=UPLOAD_FOLDER):
+def run():
     job = {
         'id': request.form.get('id'),
         'date': request.form.get('date'),
         'email-address': request.form.get('email-address'),
         'has-gams': request.form.get('has-gams') == 'true',
         'data-contrib': request.form.get('data-contrib') == 'true',
-        'cut-offs': [1.5, 2.5]
+        'cut-offs': [1.5, 2.5],
+        'files': defaultdict()
     }
 
-    upload_folder = Path(upload_folder)
-    job_folder = upload_folder / job['id']
-    job_folder.mkdir(exist_ok=True)
-
-    # get files
+    # upload files
     files = request.files
+    for i, f in files.items():
+        if allowed_file(f.filename):
+            filename = secure_filename(f.filename)
+            job['files'][i] = filename
+            upload_to_cloud(f.read(),
+                            '%s/files/%s' % (job['id'], filename),
+                            content_type=f.content_type)
 
-    # load model
+    # upload job data
+    upload_to_cloud(json.dumps(job),
+                    '%s/input.json' % job['id'],
+                    content_type='application/json')
+
+    # start analysis
     model = Model(has_gams=job['has-gams'])
     results = []
-    for i in files:
-        # load result
-        img = model.load_image(files[i])
-        pred = model.predict()
-        result = Result(i, files[i].filename, img, pred)
-        result.run(upload_folder=job_folder)
-        results.append(result.to_output())
+    for i, f in files.items():
+        if allowed_file(f.filename):
+            filename = secure_filename(f.filename)
+            img = model.load_image(f)
+            pred = model.predict()
+            upload_to_cloud(pred.to_json(),
+                            '%s/%s/result.json' % (job['id'], i),
+                            content_type='application/json')
+            result = Result(i, filename, img, pred)
+            results.append(result.to_output())
+
+            # upload associated buffers to cloud
+            for fname, buf in result.files.items():
+                upload_to_cloud(buf.getvalue(),
+                                '%s/%s' % (job['id'], fname),
+                                content_type='image/png')
+                buf.close()
 
     output = {
         'data': {
-            'summary': summarize(results),
-            'results': results
+            'results': results,
+            'summary': summarize(results)
         },
         'statusOK': True
     }
 
-    with open(job_folder / 'output.json', 'w') as f:
-        json.dump(output, f)
+    upload_to_cloud(json.dumps(output),
+                    '%s/output.json' % job['id'],
+                    content_type='application/json')
+
     return output
 
 
 @app.route('/api/result', methods=['POST'])
-def return_result(upload_folder=UPLOAD_FOLDER, example_folder=EXAMPLE_FOLDER):
+def return_result():
     job_id = request.get_json()['id']
     if job_id == 'example':
-        result_dir = Path(example_folder)
-    else:
-        result_dir = Path(upload_folder) / job_id
-    result_path = result_dir / 'output.json'
-    if result_path.exists():
-        with open(result_path) as f:
+        with open(Path(app.config['EXAMPLE_FOLDER']) / 'output.json') as f:
             return json.load(f)
     else:
-        return {'statusOK': False}
+        f = read_from_cloud('%s/output.json' % job_id)
+        if not f: return {'statusOK': False}
+        return json.loads(f)
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, threaded=True, debug=True)
