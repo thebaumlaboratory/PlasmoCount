@@ -15,7 +15,7 @@ WORKDIR /app/api
 ENV PYTHONPATH "${PYTHONPATH}:/app"
 COPY --from=0 app/build ../build
 COPY --from=0 app/node_modules ../node_modules
-RUN apt-get update && apt-get install -y build-essential
+RUN apt-get clean && apt-get update && apt-get install -y build-essential
 COPY api/requirements.txt .
 RUN pip --no-cache-dir install torch==1.7.0
 RUN pip install -r requirements.txt

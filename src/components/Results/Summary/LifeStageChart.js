@@ -3,7 +3,10 @@ import { Slider } from "react-semantic-ui-range";
 import Plot from "react-plotly.js";
 
 const ImageBar = (jobId, x, ind) => {
-  const endPoint = jobId === "example" ? "api/example" : `api/uploads/${jobId}`;
+  const endPoint =
+    jobId === "example"
+      ? "api/example"
+      : `https://storage.googleapis.com/plasmocount-bucket/${jobId}`;
   // for production: https://storage.googleapis.com/plasmocount-bucket/${jobId}
   const images = ind.map((i, key) => {
     return (
