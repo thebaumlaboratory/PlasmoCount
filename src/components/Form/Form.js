@@ -1,6 +1,8 @@
 import "./Form.css";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
 
 const Form = (props) => {
   const [emailAddress, setEmailAddress] = useState("");
@@ -10,7 +12,24 @@ const Form = (props) => {
   const [isOpen, makeOpen] = useState(true);
   const active = isOpen ? "active" : "";
 
-  const onFormSubmit = (e) => {
+  const uploadFile = async (file, jobId) => new Promise(async resolve => {
+    let urlFormData = new FormData();
+    urlFormData.append("fname", jobId + "/files/" + file.name);
+    var response = await fetch("/api/get-url", {
+      method: "POST",
+      body: urlFormData,
+    })
+    var url = await response.text()
+    let config = {
+      headers: {
+        'Content-type': 'application/octet-stream',
+      }
+    }
+    await axios.put(url, file, config)
+    resolve();
+  });
+
+  const populateForm = async (e) => {
     e.preventDefault();
     if (!files) {
       return;
@@ -18,15 +37,25 @@ const Form = (props) => {
     let formData = new FormData();
     const timestamp = Date.now();
     const date = new Date(timestamp);
-    for (const file in files) {
-      formData.append(file, files[file]);
+    const jobId = uuidv4();
+    var uploads = [];
+    for (let i = 0; i < files.length; i++) {
+      uploads.push(uploadFile(files[i], jobId));
     }
+    await Promise.all(uploads).then((values) => {
+      console.log(values);
+    });
+    formData.append("id", jobId);
     formData.append("email-address", emailAddress);
     formData.append("has-gams", hasGams);
     formData.append("data-contrib", dataContrib);
     formData.append("date", date.toISOString());
     makeOpen(false);
-    props.onSubmit(formData);
+    return formData;
+  };
+
+  const onFormSubmit = async (e) => {
+    populateForm(e).then(formData => props.onSubmit(formData))
   };
 
   return (

@@ -4,15 +4,13 @@ import Menu from "./components/Menu";
 import About from "./components/About";
 import Results from "./components/Results/Results";
 import { BrowserRouter as Router, Route, Redirect } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 const App = () => {
   const [activeJob, setActiveJob] = useState(null);
 
   const onFormSubmit = (formData) => {
     if (formData) {
-      const jobId = uuidv4();
-      formData.append("id", jobId);
+      var jobId = formData.get("id");
       setActiveJob(jobId);
       fetch("/api/model", {
         method: "POST",
