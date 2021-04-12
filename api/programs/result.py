@@ -44,9 +44,15 @@ class Result:
         self.plot_prediction()
 
     def to_output(self):
+        def _transform_name(fname):
+            """Transforms local filename by removing prefix dir."""
+            if fname.startswith('/'):
+                fname = fname[1:]
+            return '/'.join(fname.split('/')[1:])
+
         return {
             'id': int(self.id),
-            'name': str(self.fname),
+            'name': str(_transform_name(self.fname)),
             'n_cells': int(len(self)),
             'n_infected': int(self.n_infected),
             'n_uninfected': int(self.n_uninfected),
