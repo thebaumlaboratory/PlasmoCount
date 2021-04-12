@@ -10,8 +10,6 @@ const App = () => {
 
   const onFormSubmit = (formData) => {
     if (formData) {
-      var jobId = formData.get("id");
-      setActiveJob(jobId);
       fetch("/api/model", {
         method: "POST",
         body: formData,
@@ -29,7 +27,7 @@ const App = () => {
         <Route
           path={["/", "/:id"]}
           exact
-          render={(props) => <Form {...props} onSubmit={onFormSubmit} />}
+          render={(props) => <Form {...props} onSubmit={onFormSubmit} setActive={setActiveJob}/>}
         />
         <Route path="/pages/about" exact component={About} />
         <div className="ui hidden divider"></div>

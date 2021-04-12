@@ -18,26 +18,26 @@ const Form = (props) => {
     var response = await fetch("/api/get-url", {
       method: "POST",
       body: urlFormData,
-    })
-    var url = await response.text()
+    });
+    var url = await response.text();
     let config = {
       headers: {
         'Content-type': 'application/octet-stream',
       }
     }
-    await axios.put(url, file, config)
+    await axios.put(url, file, config);
     resolve();
   });
 
-  const populateForm = async (e) => {
+  const populateForm = async (e, jobId) => {
     e.preventDefault();
     if (!files) {
       return;
     }
+    makeOpen(false);
     let formData = new FormData();
     const timestamp = Date.now();
     const date = new Date(timestamp);
-    const jobId = uuidv4();
     var uploads = [];
     for (let i = 0; i < files.length; i++) {
       uploads.push(uploadFile(files[i], jobId));
@@ -50,12 +50,13 @@ const Form = (props) => {
     formData.append("has-gams", hasGams);
     formData.append("data-contrib", dataContrib);
     formData.append("date", date.toISOString());
-    makeOpen(false);
     return formData;
   };
 
   const onFormSubmit = async (e) => {
-    populateForm(e).then(formData => props.onSubmit(formData))
+    const jobId = uuidv4();
+    props.setActive(jobId);
+    populateForm(e, jobId).then(formData => props.onSubmit(formData));
   };
 
   return (
