@@ -3,7 +3,6 @@ from flask_cors import CORS, cross_origin
 from flask_basicauth import BasicAuth
 from google.cloud import storage
 
-import logging
 import os
 
 from collections import defaultdict
@@ -24,6 +23,8 @@ app.config.from_object('config')
 basic_auth = BasicAuth(app)
 CORS(app, support_credentials=True)
 
+gams_model = Model(has_gams=True)
+nogams_model = Model(has_gams=False)
 
 def upload_to_cloud(file, fname, content_type, **kwargs):
     gcs = storage.Client()
@@ -108,7 +109,10 @@ def run():
         files.append(local_filename)
 
     # start analysis
-    model = Model(has_gams=job['has-gams'])
+    if job['has-gams']:
+        model = gams_model
+    else:
+        model = nogams_model
     results = []
     for i, filename in enumerate(files):
         if allowed_file(filename):
