@@ -22,9 +22,8 @@ app = Flask(__name__, static_folder='../build', static_url_path='/')
 app.config.from_object('config')
 basic_auth = BasicAuth(app)
 CORS(app, support_credentials=True)
+model = Model()
 
-gams_model = Model(has_gams=True)
-nogams_model = Model(has_gams=False)
 
 def upload_to_cloud(file, fname, content_type, **kwargs):
     gcs = storage.Client()
@@ -109,15 +108,11 @@ def run():
         files.append(local_filename)
 
     # start analysis
-    if job['has-gams']:
-        model = gams_model
-    else:
-        model = nogams_model
     results = []
     for i, filename in enumerate(files):
         if allowed_file(filename):
             img = model.load_image(filename)
-            pred = model.predict()
+            pred = model.predict(job['has-gams'])
             upload_to_cloud(pred.to_json(),
                             '%s/%s/result.json' % (job['id'], i),
                             content_type='application/json')
