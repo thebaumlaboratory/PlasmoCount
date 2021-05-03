@@ -3,7 +3,6 @@ from flask_cors import CORS, cross_origin
 from flask_basicauth import BasicAuth
 from google.cloud import storage
 
-import logging
 import os
 
 from collections import defaultdict
@@ -23,6 +22,7 @@ app = Flask(__name__, static_folder='../build', static_url_path='/')
 app.config.from_object('config')
 basic_auth = BasicAuth(app)
 CORS(app, support_credentials=True)
+model = Model()
 
 
 def upload_to_cloud(file, fname, content_type, **kwargs):
@@ -108,12 +108,11 @@ def run():
         files.append(local_filename)
 
     # start analysis
-    model = Model(has_gams=job['has-gams'])
     results = []
     for i, filename in enumerate(files):
         if allowed_file(filename):
             img = model.load_image(filename)
-            pred = model.predict()
+            pred = model.predict(job['has-gams'])
             upload_to_cloud(pred.to_json(),
                             '%s/%s/result.json' % (job['id'], i),
                             content_type='application/json')
