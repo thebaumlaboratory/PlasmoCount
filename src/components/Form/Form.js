@@ -119,7 +119,7 @@ const Form = (props) => {
               onChange={(e) => setFiles(e.target.files)}
               multiple
             />
-            <div className="description">.tiff, .jpg, .png accepted</div>
+            <div className="description">.jpg or .png recommended, .tiff may cause delays</div>
           </div>
           <div className="field">
             <div className="ui checkbox">
