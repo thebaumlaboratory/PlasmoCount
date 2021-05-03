@@ -12,7 +12,6 @@ from scipy import stats
 
 class Model:
     def __init__(self,
-                 has_gams=True,
                  model_path='./models',
                  od_model='faster-rcnn.pt',
                  class_model='class_resnet.pkl',
@@ -27,7 +26,6 @@ class Model:
         self.class_model = load_learner(path=model_path, file=class_model)
         self.ls_model = load_learner(path=model_path, file=ls_model)
         self.gam_model = load_learner(path=model_path, file=gam_model)
-        self.has_gams = has_gams
         self.cutoffs = cutoffs
 
     def load_image(self, fileName):
@@ -37,7 +35,7 @@ class Model:
         self.img = tensor
         return tensor
 
-    def predict(self):
+    def predict(self, has_gams):
         with torch.no_grad():
             prediction = self.od_model([self.img])[0]
             prediction = self.post_processing(prediction)
@@ -49,7 +47,7 @@ class Model:
                 bbox_img = Image(self.img[:, y0:y1, x0:x1])
                 bbox_pred = self.class_model.predict(bbox_img)
                 if str(bbox_pred[0]) == 'infected':
-                    if self.has_gams:
+                    if has_gams:
                         gam_pred = self.gam_model.predict(bbox_img)
                         if str(gam_pred[0]) == 'asexual':
                             ls_pred = self.ls_model.predict(bbox_img)
