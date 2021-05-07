@@ -10,6 +10,7 @@
     "browserslist": "^4.14.7",
     "chart.js": "^2.9.3",
     "css-loader": "^5.0.1",
+    "emailjs-com": "^2.6.4",
     "plotly.js": "^1.57.1",
     "postcss": "^8.1.7",
     "react": "^16.13.1",
