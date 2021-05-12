@@ -29,4 +29,4 @@ COPY public ../public
 COPY src ../src
 ENV PORT=8080
 EXPOSE 8080
-CMD exec gunicorn --bind :$PORT app:app --workers 3 --threads 1 --timeout 300
+CMD exec gunicorn --bind :$PORT app:app --workers 5 --threads 1 --timeout 300
