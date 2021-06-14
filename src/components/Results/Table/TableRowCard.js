@@ -6,7 +6,7 @@ const TableRowCard = ({ jobId, data }) => {
   return (
     <div className="ui fluid card">
       <div className="image">
-        <img alt={data.name} src={`${endPoint}/${data.plot}`} />
+        <img alt={data.name} src={`${endPoint}/${data.plot}?time=${Date.now()}`} />
       </div>
     </div>
   );
