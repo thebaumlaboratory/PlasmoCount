@@ -1,6 +1,6 @@
 # PlasmoCount: automated detection and staging of malaria parasites from cytological smears
 
-PlasmoCount is an ML tool for the automated detection and staging of malaria parasites in Giemsa-stained thin blood smears. PlasmoCount uses a collection of ResNets for the detection of individual red blood cells, classification of infection, and continuous staging of the asexual development of the parasite. You can access PlasmoCount's prototype on www.plasmocount.org or run it locally following the steps below.
+PlasmoCount is an ML tool for the automated detection and staging of malaria parasites in Giemsa-stained thin blood smears. PlasmoCount uses a collection of ResNets for the detection of individual red blood cells, classification of infection, and continuous staging of the asexual development of the parasite. You can access PlasmoCount's prototype on https://plasmocount.org or run it locally following the steps below.
 
 The username and password for PlasmoCount are available at https://www.baumlab.com/plasmocount.
 Please note, PlasmoCount currently only accepts *Plasmodium falciparum* blood smears. 
