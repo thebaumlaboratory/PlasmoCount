@@ -3,22 +3,37 @@ import Form from "./components/Form/Form";
 import Menu from "./components/Menu";
 import About from "./components/About";
 import Results from "./components/Results/Results";
+import emailjs from "emailjs-com";
 import { BrowserRouter as Router, Route, Redirect } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 const App = () => {
   const [activeJob, setActiveJob] = useState(null);
 
   const onFormSubmit = (formData) => {
     if (formData) {
-      const jobId = uuidv4();
-      formData.append("id", jobId);
-      setActiveJob(jobId);
+
+      const email = formData.get("email-address");
+      if (email) {
+        sendEmail({
+          job_id: formData.get("id"),
+          to_email: email,
+        });
+      }
+
       fetch("/api/model", {
         method: "POST",
         body: formData,
       });
     }
+  };
+
+  const sendEmail = ({ job_id, to_email }) => {
+    emailjs.send(
+      "service_8awvv37",
+      "template_edgh30p",
+      { job_id, to_email },
+      "user_mjOKCHzMBUxkMpFkz7s9F"
+    );
   };
 
   return (
@@ -31,7 +46,7 @@ const App = () => {
         <Route
           path={["/", "/:id"]}
           exact
-          render={(props) => <Form {...props} onSubmit={onFormSubmit} />}
+          render={(props) => <Form {...props} onSubmit={onFormSubmit} setActive={setActiveJob}/>}
         />
         <Route path="/pages/about" exact component={About} />
         <div className="ui hidden divider"></div>
