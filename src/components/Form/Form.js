@@ -8,52 +8,60 @@ const Form = (props) => {
   const [emailAddress, setEmailAddress] = useState("");
   const [hasGams, setGams] = useState(false);
   const [dataContrib, setDataContrib] = useState(true);
-  const [files, setFiles] = useState(null);
-  const [isOpen, makeOpen] = useState(true);
-  const active = isOpen ? "active" : "";
+  
+  
+  const active = !props.hideForm ? "active" : "";
 
-  const uploadFile = async (file, jobId) => new Promise(async resolve => {
-    let urlFormData = new FormData();
-    urlFormData.append("fname", jobId + "/files/" + file.name);
-    var response = await fetch("/api/get-url", {
-      method: "POST",
-      body: urlFormData,
-    });
-    var url = await response.text();
-    let config = {
-      headers: {
-        'Content-type': 'application/octet-stream',
-      }
-    }
-    await axios.put(url, file, config);
-    resolve();
-  });
+  // const uploadFile = async (file, jobId) => new Promise(async resolve => {
+  //   let urlFormData = new FormData();
+  //   console.log("1")
+  //   urlFormData.append("fname", jobId + "/files/" + file.name);
+  //   var response = await fetch("/api/get-url", {
+  //     method: "POST",
+  //     body: urlFormData,
+  //   });
+  //   console.log("2")
+  //   var url = await response.text();
+  //   console.log("3")
+  //   let config = {
+  //     headers: {
+  //       'Content-type': 'application/octet-stream',
+  //     }
+  //   }
+    
+  //   await axios.put(url, file, config);
+  //   resolve();
+  //   console.log("4")
+  // });
 
   const populateForm = async (e, jobId) => {
     e.preventDefault();
-    if (!files) {
+    if (!props.files) {
       return;
     }
-    makeOpen(false);
     let formData = new FormData();
     const timestamp = Date.now();
     const date = new Date(timestamp);
     var uploads = [];
-    for (let i = 0; i < files.length; i++) {
-      uploads.push(uploadFile(files[i], jobId));
+    for (let i = 0; i < props.files.length; i++) {
+      //uploads.push(uploadFile(files[i], jobId));
+      formData.append(String(i),props.files[i],props.files[i].name)
     }
     await Promise.all(uploads).then((values) => {
       console.log(values);
     });
+    formData.append("num-files", props.files.length)
     formData.append("id", jobId);
     formData.append("email-address", emailAddress);
     formData.append("has-gams", hasGams);
     formData.append("data-contrib", dataContrib);
     formData.append("date", date.toISOString());
+    console.log(props.files)
     return formData;
   };
 
   const onFormSubmit = async (e) => {
+    props.setFromForm(true)
     const jobId = uuidv4();
     props.setActive(jobId);
     populateForm(e, jobId).then(formData => props.onSubmit(formData));
@@ -63,12 +71,12 @@ const Form = (props) => {
     <div className="ui styled fluid accordion">
       <div className={`${active} title`}>
         <span style={{ lineHeight: "28px" }}>
-          <i onClick={() => makeOpen(!isOpen)} className="dropdown icon"></i>
+          <i onClick={() => props.setFormHidden(!props.hideForm)} className="dropdown icon"></i>
           Upload
         </span>
         <Link
           to="/example"
-          onClick={() => makeOpen(false)}
+          onClick={() => props.setFormHidden(true)}
           className="ui mini right floated basic button"
         >
           Load example
@@ -116,7 +124,7 @@ const Form = (props) => {
             <label>Giemsa stain images</label>
             <input
               type="file"
-              onChange={(e) => setFiles(e.target.files)}
+              onChange={(e) => props.setFiles(e.target.files)}
               multiple
             />
             <div className="description">.jpg or .png recommended, .tiff may cause delays</div>

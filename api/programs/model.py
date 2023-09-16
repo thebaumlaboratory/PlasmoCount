@@ -19,8 +19,7 @@ class Model:
                  gam_model='gam_resnet.pkl',
                  cutoffs=[1.5, 2.5]):
         model_path = Path(model_path)
-        device = torch.device(
-            'cuda') if torch.cuda.is_available() else torch.device('cpu')
+        device = torch.device('cpu')
         self.od_model = torch.load(str(model_path / od_model), device)
         self.od_model.eval()
         self.class_model = load_learner(path=model_path, file=class_model)

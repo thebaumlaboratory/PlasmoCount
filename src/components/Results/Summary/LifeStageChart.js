@@ -1,24 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Slider } from "react-semantic-ui-range";
 import Plot from "react-plotly.js";
+import ImageBar from "./ImageBar"
 
-const ImageBar = (jobId, x, ind) => {
-  const endPoint =
-    jobId === "example"
-      ? "api/example"
-      : `https://storage.googleapis.com/plasmocount-bucket/${jobId}`;
-  // for production: https://storage.googleapis.com/plasmocount-bucket/${jobId}
-  const images = ind.map((i, key) => {
-    return (
-      <img key={key} alt="" className="ui image" src={`${endPoint}/${x[i]}`} />
-    );
-  });
-  return (
-    <div className="ui center aligned grid">
-      <div className="ui mini images">{images}</div>
-    </div>
-  );
-};
 
 const LifeStageHist = ({ x, binSize, onClick, onDoubleClick, job }) => {
   return (
@@ -57,7 +41,7 @@ const LifeStageHist = ({ x, binSize, onClick, onDoubleClick, job }) => {
   );
 };
 
-const LifeStageChart = ({ jobId, data, images }) => {
+const LifeStageChart = ({ files, data,summary_boxes,file_boxes, jobId, cloudImageNum}) => {
   const [activePoints, changeActivePoints] = useState(null);
   const [binSize, changeBinSize] = useState(0.25);
   const settings = {
@@ -90,7 +74,8 @@ const LifeStageChart = ({ jobId, data, images }) => {
       <div className="ui basic segment">
         {activePoints &&
           activePoints.length > 0 &&
-          ImageBar(jobId, images, activePoints)}
+          <ImageBar files={files} cloudImageNum={cloudImageNum} jobId={jobId} summary_boxes={summary_boxes} file_boxes={file_boxes} ind={activePoints}></ImageBar>
+          }
       </div>
       <br />
     </div>

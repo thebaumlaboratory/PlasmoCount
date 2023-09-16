@@ -1,5 +1,6 @@
 from programs.viz import plot_labels, make_crop
 import pandas as pd
+import numpy as np
 from pathlib import Path
 import time
 import io
@@ -41,18 +42,31 @@ class Result:
         self.parasitemia = round(self.n_infected / len(self), self.n_digits)
         self.life_stage_counts = self.pred['life_stage_c'].value_counts()
         self.asex = self.get_asexuals()
-        self.plot_prediction()
+        #self.plot_prediction()
 
+    def get_boxes(self):
+        infected_rows =self.pred.loc[self.pred['classes']== 'infected']
+        boxes = []
+        infected_rows = infected_rows.sort_values(by=['life_stage'])
+        
+        for index, row in infected_rows.iterrows():
+            
+            boxes.append({
+                'b': [round(i) for i in row['boxes']],
+                'l': round(row['life_stage'],2)
+            })
+     
+        return boxes
+    
     def to_output(self):
         def _transform_name(fname):
             """Transforms local filename by removing prefix dir."""
             if fname.startswith('/'):
                 fname = fname[1:]
             return '/'.join(fname.split('/')[1:])
-
         return {
-            'id': int(self.id),
-            'name': str(_transform_name(self.fname)),
+            'id':  self.id,#int(self.id),
+            'name': self.fname,
             'n_cells': int(len(self)),
             'n_infected': int(self.n_infected),
             'n_uninfected': int(self.n_uninfected),
@@ -62,9 +76,11 @@ class Result:
             'n_schizont': int(self.life_stage_counts.get('schizont', 0)),
             'n_gam': int(self.life_stage_counts.get('gametocyte', 0)),
             'asex_stages': list(self.asex['life_stage']),
-            'asex_images': list(self.asex['filename'])
+            'asex_images': list(self.asex['filename']),
+            'boxes': self.get_boxes()
         }
 
+    
     def get_asexuals(self, stages=['ring', 'trophozoite', 'schizont']):
         asex = self.pred.loc[self.pred['life_stage_c'].isin(
             stages)].reset_index()
@@ -90,3 +106,4 @@ class Result:
                     color_dict=self.color_dict,
                     **kwargs)
         self.files[fname] = buf
+        
