@@ -4,7 +4,7 @@ import numpy as np
 from pathlib import Path
 import time
 import io
-
+import math
 
 class Result:
     def __init__(
@@ -45,16 +45,21 @@ class Result:
         #self.plot_prediction()
 
     def get_boxes(self):
-        infected_rows =self.pred.loc[self.pred['classes']== 'infected']
+        infected_rows =self.pred
         boxes = []
         infected_rows = infected_rows.sort_values(by=['life_stage'])
         
         for index, row in infected_rows.iterrows():
-            
-            boxes.append({
+            lifestage = round(row['life_stage'],2)
+            if math.isnan(row['life_stage']):
+                 boxes.append({
                 'b': [round(i) for i in row['boxes']],
-                'l': round(row['life_stage'],2)
-            })
+                })
+            else:
+                boxes.append({
+                    'b': [round(i) for i in row['boxes']],
+                    'l': lifestage
+                })
      
         return boxes
     

@@ -1,0 +1,25 @@
+.button {
+  background-color: white;
+  border: none;
+  padding: 5px 2px 5px 10px;
+  caret-color : transparent;
+  text-align: left;
+}
+.button:hover {
+    background-color: #eee; 
+   
+}
+
+.contextmenu {
+  position: absolute;
+  display: flex;
+  width: 190px;
+  z-index: 2;
+  flex-direction: column;
+  border: 1px solid #aaa;
+}
+
+.box {
+  display: flex;
+  flex-direction: column;
+}

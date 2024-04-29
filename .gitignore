@@ -162,5 +162,3 @@ yarn-error.log*
 # upload folder
 uploads/
 
-/api/models/
-/yarn.lock

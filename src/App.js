@@ -15,27 +15,31 @@ const App = () => {
   const [Loading, setLoading] = useState(false);
   const [fromForm,setFromForm] = useState(false);
   const [hideForm,setFormHidden] = useState(false);
+  const [errorMessage,setErrorMessage] = useState(null)
 
-  const [error,setError] = useState(false);
   const onFormSubmit = (formData) => {
     
-    console.log("onformsubmit")
+    
     if (formData) {
-      console.log("got formdata")
       
+      setErrorMessage(null)
       setLoading(true)
-      axios.post("/api/new_model",formData ,{
+      axios.post("/api/model",formData ,{
         headers: {
             "Content-type": "multipart/form-data",
         },                    
     }).then((response) => {
-      setError(false)
+      
       setLoading(false)
       console.log(response)
-     
+      console.log(response.data.data.summary)
       setSummary(response.data.data.summary);
       setResults(response.data.data.results);
-    });
+    }).catch((err) =>{
+      console.log(err.response.data)
+      setErrorMessage(err.response.data)
+    
+    })
       
     }
   };
@@ -47,16 +51,16 @@ const App = () => {
       <div className="ui container">
         <Menu />
         <h1 className="ui center aligned header">PlasmoCount</h1>
-        {error && (<div style={{backgroundColor:"#FFB6C1",borderRadius:"5px",padding:"15px 10px 15px 50px"}}>Error</div>)}
+    
         <div className="ui hidden divider"></div>
         <Route
           path={["/", "/:id"]}
           exact
-          render={(props) => <Form {...props} onSubmit={onFormSubmit} files={files} setFiles={setFiles} setActive={setActiveJob} setFromForm={setFromForm} hideForm={hideForm} setFormHidden={setFormHidden}/>}
+          render={(props) => <Form {...props} onSubmit={onFormSubmit} files={files} setFiles={setFiles} setActive={setActiveJob} setFromForm={setFromForm} hideForm={hideForm} setFormHidden={setFormHidden} errorMessage={errorMessage}/>}
         />
         <Route path="/pages/about" exact component={About} />
         <div className="ui hidden divider"></div>
-        {!error && <Route path="/:id" exact render={(props) => <Results {...props} setError={setError} results={results} summary={summary} Loading={Loading} fromForm={fromForm} files={files} setResults={setResults} setSummary={setSummary} setLoading={setLoading} setFormHidden={setFormHidden}/>} />}
+        <Route path="/:id" exact render={(props) => <Results {...props} results={results} summary={summary} Loading={Loading} fromForm={fromForm} files={files} setResults={setResults} setSummary={setSummary} setLoading={setLoading} setFormHidden={setFormHidden} errorMessage={errorMessage}/>} />
       
         </div>
     </Router>

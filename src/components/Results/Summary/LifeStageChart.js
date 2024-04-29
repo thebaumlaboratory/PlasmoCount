@@ -5,13 +5,14 @@ import ImageBar from "./ImageBar"
 
 
 const LifeStageHist = ({ x, binSize, onClick, onDoubleClick, job }) => {
+
   return (
     <div>
       <Plot
         data={[
           {
             type: "histogram",
-            x: x,
+            x: x.asex_stages,
             xbins: {
               end: 4,
               size: binSize,
@@ -41,7 +42,16 @@ const LifeStageHist = ({ x, binSize, onClick, onDoubleClick, job }) => {
   );
 };
 
-const LifeStageChart = ({ files, data,summary_boxes,file_boxes, jobId, cloudImageNum}) => {
+const LifeStageChart = ({ files,data,set_data,file_boxes, jobId, cloudImage}) => {
+  useEffect(()=> {
+    if(data.boxes != undefined)  {
+      let summary_stages = data.boxes.map(cell => cell.life)
+      let new_data = data
+      new_data.asex_stages = summary_stages
+      set_data(new_data)
+    }
+  },[data])
+  
   const [activePoints, changeActivePoints] = useState(null);
   const [binSize, changeBinSize] = useState(0.25);
   const settings = {
@@ -74,7 +84,7 @@ const LifeStageChart = ({ files, data,summary_boxes,file_boxes, jobId, cloudImag
       <div className="ui basic segment">
         {activePoints &&
           activePoints.length > 0 &&
-          <ImageBar files={files} cloudImageNum={cloudImageNum} jobId={jobId} summary_boxes={summary_boxes} file_boxes={file_boxes} ind={activePoints}></ImageBar>
+          <ImageBar files={files} cloudImage={cloudImage} jobId={jobId} summary_boxes={data.boxes} file_boxes={file_boxes} ind={activePoints}></ImageBar>
           }
       </div>
       <br />

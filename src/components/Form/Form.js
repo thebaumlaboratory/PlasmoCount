@@ -1,38 +1,17 @@
 import "./Form.css";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import { MessageHeader, Message } from 'semantic-ui-react'
+
 import { v4 as uuidv4 } from "uuid";
 
 const Form = (props) => {
   const [emailAddress, setEmailAddress] = useState("");
   const [hasGams, setGams] = useState(false);
   const [dataContrib, setDataContrib] = useState(true);
-  
+  const [magnification, setMagnification] = useState(100);
   
   const active = !props.hideForm ? "active" : "";
-
-  // const uploadFile = async (file, jobId) => new Promise(async resolve => {
-  //   let urlFormData = new FormData();
-  //   console.log("1")
-  //   urlFormData.append("fname", jobId + "/files/" + file.name);
-  //   var response = await fetch("/api/get-url", {
-  //     method: "POST",
-  //     body: urlFormData,
-  //   });
-  //   console.log("2")
-  //   var url = await response.text();
-  //   console.log("3")
-  //   let config = {
-  //     headers: {
-  //       'Content-type': 'application/octet-stream',
-  //     }
-  //   }
-    
-  //   await axios.put(url, file, config);
-  //   resolve();
-  //   console.log("4")
-  // });
 
   const populateForm = async (e, jobId) => {
     e.preventDefault();
@@ -48,19 +27,19 @@ const Form = (props) => {
       formData.append(String(i),props.files[i],props.files[i].name)
     }
     await Promise.all(uploads).then((values) => {
-      console.log(values);
     });
     formData.append("num-files", props.files.length)
     formData.append("id", jobId);
     formData.append("email-address", emailAddress);
     formData.append("has-gams", hasGams);
+    formData.append("magnification", magnification);
     formData.append("data-contrib", dataContrib);
     formData.append("date", date.toISOString());
-    console.log(props.files)
     return formData;
   };
 
   const onFormSubmit = async (e) => {
+    
     props.setFromForm(true)
     const jobId = uuidv4();
     props.setActive(jobId);
@@ -103,10 +82,13 @@ const Form = (props) => {
             />
           </div>
           <div className="field">
-            <label>Malaria Species</label>
-            <select className="ui fluid disabled dropdown">
-              <option value="falciparum" placeholder="Plasmodium falciparum">
-                Plasmodium falciparum
+            <label>Magnification</label>
+            <select className="ui fluid dropdown" value={magnification} onChange={() =>setMagnification(magnification == 100 ? 40 : 100)}>
+            <option class="item" value="100" placeholder="100">
+                100x
+              </option>
+              <option value="40" placeholder="40">
+                40x
               </option>
             </select>
           </div>
@@ -146,6 +128,10 @@ const Form = (props) => {
           </button>
         </form>
       </div>
+      {props.errorMessage && <Message negative>
+    <MessageHeader><i class="exclamation triangle icon"></i> Error</MessageHeader>
+    {props.errorMessage}
+  </Message>}
     </div>
   );
 };
