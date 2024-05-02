@@ -1,12 +1,10 @@
 import io
-from flask import Flask, request, render_template, send_from_directory
-from flask_cors import CORS, cross_origin
+from flask import Flask, request, send_from_directory
+from flask_cors import CORS
 from flask_basicauth import BasicAuth
-import PIL
 from google.cloud import storage
 import os
 os.environ["GCLOUD_PROJECT"] = "myPlasmocountInstance"
-import time
 #uncomment this line when working locally
 #os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '../service_account_key.json'
 import warnings
@@ -27,8 +25,9 @@ CORS(app, support_credentials=True)
 model = Model()
 gcs = storage.Client()
 bucket = gcs.get_bucket(app.config['CLOUD_STORAGE_BUCKET'])
+
+#data to be uploaded to google cloud storage under the jobID folder
 def upload_data(files, data,request_info):
-    
     blob = bucket.blob(request_info['jobID'] + "/results.json")
     blob.upload_from_string(json.dumps(data),content_type='application/json')  
     blob = bucket.blob(request_info['jobID'] + "/info.json")
@@ -40,7 +39,7 @@ def upload_data(files, data,request_info):
         blob.upload_from_file(files[id],rewind=True,content_type="image/"+files[id].name.split('.').pop())
     email_user(request_info['email_address'],'https://plasmocount.org/'+request_info['jobID'])
 
-    
+
 def set_progress(jobID, currentImage, totalImage):
     uploadStr = f"{currentImage},{totalImage}"
     blob = bucket.blob(f"{jobID}/progress")
@@ -50,6 +49,7 @@ def set_progress(jobID, currentImage, totalImage):
         blob.upload_from_string(uploadStr, content_type='text/plain')
     else:
         blob.upload_from_string("finish", content_type='text/plain')
+
 
 def get_progress(jobID):
     blob = bucket.get_blob(jobID+'/progress')
@@ -87,7 +87,6 @@ def invalid_file(filename):
 def run():
     data = {
         'id': request.form.get('id'),
-        'magnification': request.form.get('magnification'),
         'date': request.form.get('date'),
         'email-address': request.form.get('email-address'),
         'has-gams': request.form.get('has-gams') == 'true',
@@ -112,13 +111,12 @@ def run():
         current_file = request.files.get(key)
         
         if invalid_file(current_file.filename):
-            #do something  
+            #return error as well only accept 'png', 'jpg', 'jpeg','tif','tiff'
             return "Invalid File Extension", 401
             
             
 
-        pred,PILimage = model.predict(current_file,id,data['has-gams'],int(data['magnification']))
-        
+        pred,PILimage = model.predict(current_file,id,data['has-gams'])
         set_request_progress_thread = threading.Thread(target=set_progress, args=(data['id'],id+1,int(data['num-files'])))
         set_request_progress_thread.start()
         images.append(PILimage)

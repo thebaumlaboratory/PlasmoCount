@@ -161,4 +161,5 @@ yarn-error.log*
 
 # upload folder
 uploads/
-
+api/models/classification_model
+service_account_key.json

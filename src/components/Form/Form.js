@@ -9,7 +9,6 @@ const Form = (props) => {
   const [emailAddress, setEmailAddress] = useState("");
   const [hasGams, setGams] = useState(false);
   const [dataContrib, setDataContrib] = useState(true);
-  const [magnification, setMagnification] = useState(100);
   
   const active = !props.hideForm ? "active" : "";
 
@@ -32,7 +31,6 @@ const Form = (props) => {
     formData.append("id", jobId);
     formData.append("email-address", emailAddress);
     formData.append("has-gams", hasGams);
-    formData.append("magnification", magnification);
     formData.append("data-contrib", dataContrib);
     formData.append("date", date.toISOString());
     return formData;
@@ -82,17 +80,6 @@ const Form = (props) => {
             />
           </div>
           <div className="field">
-            <label>Magnification</label>
-            <select className="ui fluid dropdown" value={magnification} onChange={() =>setMagnification(magnification == 100 ? 40 : 100)}>
-            <option class="item" value="100" placeholder="100">
-                100x
-              </option>
-              <option value="40" placeholder="40">
-                40x
-              </option>
-            </select>
-          </div>
-          <div className="field">
             <div className="ui checkbox">
               <input
                 type="checkbox"
@@ -109,7 +96,7 @@ const Form = (props) => {
               onChange={(e) => props.setFiles(e.target.files)}
               multiple
             />
-            <div className="description">.jpg or .png recommended, .tiff may cause delays</div>
+            <div className="description">.jpg or .png recommended, .tiff causes delays</div>
           </div>
           <div className="field">
             <div className="ui checkbox">
