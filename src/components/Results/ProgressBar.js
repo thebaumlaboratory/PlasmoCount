@@ -2,21 +2,12 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Progress } from "semantic-ui-react";
 import Loader from "./Loader";
-const ProgressBar = ({ active,jobId, errorMessage}) => {
+const ProgressBar = ({ active,requestState,jobId, errorMessage}) => {
     const [current,setCurrent] = useState(0);
     const [total,setTotal] = useState(2);
     const [labelText,setLabelText] = useState("Uploading Files")
     let interval = null
-    useEffect(() => {
-    
-        if(errorMessage) {
-            
-            if(interval != null)    {
-                
-                clearInterval(interval);
-            }
-        }
-    },[errorMessage])
+
     useEffect(() => {
         if(active == true && interval == null)  {
             interval = setInterval(() => {
@@ -52,7 +43,7 @@ const ProgressBar = ({ active,jobId, errorMessage}) => {
             }
         }
     },[active])
-    if(active && errorMessage == null)  {
+    if(active && errorMessage == null && requestState != 'completed')  {
         return <div><Progress percent={current/total*100}>{labelText}</Progress><Loader text="Fetching results..." /></div>;
     }else{
         return null

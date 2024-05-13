@@ -78,7 +78,6 @@ class Model():
 
         #load the data into batches with the fastai Dataloader https://docs.fast.ai/data.load.html
         dl = DataLoader(img_list, batch_size=CLASSICIFATION_BATCH_SIZE, shuffle=False)
-        print("classification")
     
         pred = self.cls_model.get_preds(dl=dl)
         

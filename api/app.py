@@ -27,18 +27,20 @@ gcs = storage.Client()
 bucket = gcs.get_bucket(app.config['CLOUD_STORAGE_BUCKET'])
 
 #data to be uploaded to google cloud storage under the jobID folder
-def upload_data(files, data,request_info):
+def upload_data(files, data,request_info,previous_results_length):
     blob = bucket.blob(request_info['jobID'] + "/results.json")
     blob.upload_from_string(json.dumps(data),content_type='application/json')  
     blob = bucket.blob(request_info['jobID'] + "/info.json")
     blob.upload_from_string(json.dumps(request_info),content_type='application/json')  
-    for id,key in enumerate(files):
-        #upload each image of giemsa smear to the cloud
-        filename = request_info['jobID'] + "/" + str(id)
-        blob = bucket.blob(filename)
-        blob.upload_from_file(files[id],rewind=True,content_type="image/"+files[id].name.split('.').pop())
+    upload_images(files,request_info['jobID'],previous_results_length)
     email_user(request_info['email_address'],'https://plasmocount.org/'+request_info['jobID'])
 
+def upload_images(files,jobID,previous_results_length):
+    for id,key in enumerate(files):
+        #upload each image of giemsa smear to the cloud
+        filename = jobID + "/" + str(id+previous_results_length)
+        blob = bucket.blob(filename)
+        blob.upload_from_file(files[id],rewind=True,content_type="image/"+files[id].name.split('.').pop())
 
 def set_progress(jobID, currentImage, totalImage):
     uploadStr = f"{currentImage},{totalImage}"
@@ -85,33 +87,45 @@ def invalid_file(filename):
 
 @app.route('/api/model', methods=['POST'])
 def run():
-    data = {
-        'id': request.form.get('id'),
-        'date': request.form.get('date'),
-        'email-address': request.form.get('email-address'),
-        'has-gams': request.form.get('has-gams') == 'true',
-        'data-contrib': request.form.get('data-contrib') == 'true',
-        'cut-offs': [1.5, 2.5],
-        'num-files': request.form.get('num-files')
-    }
+    last_request = (request.form.get('last-request') == 'true')
+    if last_request:
+        data = {
+            'id': request.form.get('id'),
+            'date': request.form.get('date'),
+            'email-address': request.form.get('email-address'),
+            'has-gams': request.form.get('has-gams') == 'true',
+            'data-contrib': request.form.get('data-contrib') == 'true',
+            'cut-offs': [1.5, 2.5],
+            'num-files': request.form.get('num-files'),
+            'previous-results': request.form.get('previous-results')
+        }
+    else:
+        data = {
+            'id': request.form.get('id'),
+            'has-gams': request.form.get('has-gams') == 'true',
+            'cut-offs': [1.5, 2.5],
+            'num-files': request.form.get('num-files'),
+            'previous-results': request.form.get('previous-results')
+        }
     
-    if(data['num-files'] is None or data['num-files'] == 0):
+    if data['num-files'] is None or data['num-files'] == 0:
         return "No Files Received", 401
-
-    
     results = []
-             
+    if data['previous-results'] != 'null':
+        results = json.loads(str(data['previous-results']))
+    previous_image_num = len(results)       
     images = []
     image_filenames = []
     while(not model.is_loaded):
+        print('here') 
         pass
     
-
+    print('here') 
     for id,key in enumerate(request.files):
         current_file = request.files.get(key)
         
         if invalid_file(current_file.filename):
-            #return error as well only accept 'png', 'jpg', 'jpeg','tif','tiff'
+            #return error only accept 'png', 'jpg', 'jpeg','tif','tiff'
             return "Invalid File Extension", 401
             
             
@@ -135,7 +149,15 @@ def run():
         "statusOK": True,
         
     }
-    if data['id'] != None:
+    print('here') 
+    copy_files = []
+    for image, image_name in zip(images,image_filenames):
+        f = io.BytesIO()
+        image.convert('RGB').save(f,"jpeg")
+        f.name = image_name
+        copy_files.append(f)
+    if last_request:
+        #in last request we want to upload both the images as well as the result data.
         request_info = {
                 "jobID": data['id'],
                 'data-contrib': data['data-contrib'],
@@ -146,14 +168,10 @@ def run():
             "results": results,
             "summary": summary,
         }
-        
-        copy_files = []
-        for image, image_name in zip(images,image_filenames):
-            f = io.BytesIO()
-            image.convert('RGB').save(f,"jpeg")
-            f.name = image_name
-            copy_files.append(f)
-        t1 = threading.Thread(target=upload_data, args=(copy_files,cloud_data,request_info))
+        t1 = threading.Thread(target=upload_data, args=(copy_files,cloud_data,request_info,previous_image_num))
+        t1.start()
+    else:
+        t1 = threading.Thread(target=upload_images, args=(copy_files,data['id'],previous_image_num ))
         t1.start()
     return output
 

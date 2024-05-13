@@ -11,11 +11,42 @@ const App = () => {
   const [results, setResults] = useState([]);
   const [summary, setSummary] = useState({});
   const [files, setFiles] = useState(null);
+  // 4 states "before_request" - "before_first_results" - "after_first_results" - "completed"
 
-  const [Loading, setLoading] = useState(false);
+  const [requestState, setRequestState] = useState('before_request');
   const [fromForm,setFromForm] = useState(false);
   const [hideForm,setFormHidden] = useState(false);
   const [errorMessage,setErrorMessage] = useState(null)
+
+  //recursive function to send all of the images in batches
+  const sendForm = (forms,return_data) => {
+
+    if(forms.length == 0) {
+      setRequestState('completed')
+      return
+    }
+    let formData = forms.shift();
+    formData.append('previous-results', JSON.stringify(return_data))
+    
+    axios.post("/api/model",formData ,{
+      headers: {
+          "Content-type": "multipart/form-data",
+      },                    
+  }).then((response) => {
+    if(requestState != "after_first_results")  {
+      setRequestState("after_first_results")
+    }
+    setSummary(response.data.data.summary);
+    setResults(response.data.data.results);
+    console.log(response.data.data.results)
+    sendForm(forms,response.data.data.results)
+  }).catch((err) =>{
+    setRequestState("before_request")
+    console.log(err.response.data)
+    setErrorMessage(err.response.data)
+    
+  })
+  }
 
   const onFormSubmit = (formData) => {
     
@@ -23,23 +54,8 @@ const App = () => {
     if (formData) {
       
       setErrorMessage(null)
-      setLoading(true)
-      axios.post("/api/model",formData ,{
-        headers: {
-            "Content-type": "multipart/form-data",
-        },                    
-    }).then((response) => {
-      
-      setLoading(false)
-      console.log(response)
-      console.log(response.data.data.summary)
-      setSummary(response.data.data.summary);
-      setResults(response.data.data.results);
-    }).catch((err) =>{
-      console.log(err.response.data)
-      setErrorMessage(err.response.data)
-    
-    })
+      setRequestState("before_first_results")
+      sendForm(formData,null,0)
       
     }
   };
@@ -60,7 +76,7 @@ const App = () => {
         />
         <Route path="/pages/about" exact component={About} />
         <div className="ui hidden divider"></div>
-        <Route path="/:id" exact render={(props) => <Results {...props} results={results} summary={summary} Loading={Loading} fromForm={fromForm} files={files} setResults={setResults} setSummary={setSummary} setLoading={setLoading} setFormHidden={setFormHidden} errorMessage={errorMessage}/>} />
+        <Route path="/:id" exact render={(props) => <Results {...props} results={results} summary={summary} requestState={requestState} fromForm={fromForm} files={files} setResults={setResults} setSummary={setSummary} setRequestState={setRequestState} setFormHidden={setFormHidden} errorMessage={errorMessage}/>} />
       
         </div>
     </Router>

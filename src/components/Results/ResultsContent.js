@@ -5,7 +5,7 @@ import Summary from "./Summary/Summary";
 import { CSVLink } from "react-csv";
 import TablePagination from "./Table/TablePagination";
 
-const ResultsContent = ({ jobId, values,files, summary, cloudImage,setResults,setSummary }) => {
+const ResultsContent = ({ jobId, values,files, summary, cloudImage,requestState,setResults,setSummary }) => {
   const mobileDim = 768; // based on Semantic UI
   const [activeRowIndex, setActiveRowIndex] = useState(null);
   const [activePage, setActivePage] = useState(1);
@@ -79,7 +79,9 @@ const ResultsContent = ({ jobId, values,files, summary, cloudImage,setResults,se
     exportData.unshift(summary);
     return exportData;
   };
-  
+  if(requestState == 'before_first_results')  {
+    return null;
+  }else{
   return (
     <div className="ui stackable two column grid">
       <div className="column">
@@ -114,6 +116,7 @@ const ResultsContent = ({ jobId, values,files, summary, cloudImage,setResults,se
       </div>
     </div>
   );
+  }
 };
 
 export default ResultsContent;

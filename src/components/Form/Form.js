@@ -11,33 +11,60 @@ const Form = (props) => {
   const [dataContrib, setDataContrib] = useState(true);
   
   const active = !props.hideForm ? "active" : "";
-
+  
   const populateForm = async (e, jobId) => {
     e.preventDefault();
     if (!props.files) {
       return;
     }
-    let formData = new FormData();
-    const timestamp = Date.now();
-    const date = new Date(timestamp);
-    var uploads = [];
-    for (let i = 0; i < props.files.length; i++) {
-      //uploads.push(uploadFile(files[i], jobId));
-      formData.append(String(i),props.files[i],props.files[i].name)
-    }
-    await Promise.all(uploads).then((values) => {
-    });
-    formData.append("num-files", props.files.length)
-    formData.append("id", jobId);
-    formData.append("email-address", emailAddress);
-    formData.append("has-gams", hasGams);
-    formData.append("data-contrib", dataContrib);
-    formData.append("date", date.toISOString());
-    return formData;
+    
+    // Google cloud only allows a maximum of 32MB upload so we will do it in batches 
+    // The size threshold is slightly lower for leniency
+    
+    let image_index = 0;
+    const batch_size = 5;
+    let forms = []
+    while(image_index < props.files.length){
+
+      let formData = new FormData();
+      
+      
+      
+      let batch_index = 0;
+      let size_threshold = 30 * 1024 * 1024;
+      console.log(props.files[image_index])
+      while(image_index < props.files.length && batch_index < batch_size && size_threshold - props.files[image_index].size > 0) {
+          
+          size_threshold -= props.files[image_index].size;
+          formData.append(String(image_index),props.files[image_index],props.files[image_index].name);
+          batch_index += 1;
+          image_index += 1;
+      }
+
+      if(image_index >= props.files.length){
+        const timestamp = Date.now();
+        const date = new Date(timestamp);
+        formData.append("last-request",true);
+        formData.append("email-address", emailAddress);
+        formData.append("data-contrib", dataContrib);
+        formData.append("date", date.toISOString());
+      }else {
+        formData.append("last-request",false);
+      }
+
+      formData.append("num-files", batch_index);
+      formData.append("id", jobId);
+      formData.append("has-gams", hasGams);
+      forms.push(formData)
+    }  
+   
+    return forms;
   };
 
   const onFormSubmit = async (e) => {
-    
+    if (!props.files) {
+      return;
+    }
     props.setFromForm(true)
     const jobId = uuidv4();
     props.setActive(jobId);

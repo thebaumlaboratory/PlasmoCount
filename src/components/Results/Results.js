@@ -12,9 +12,9 @@ const Results = (props) => {
     props.setFormHidden(true)
     
     if(!props.fromForm){
-      props.setLoading(true)
+      props.setRequestState("before_first_results")
       console.log("hi")
-      //this means that the client has not submitted the form so there data is most likely stored
+      //this means that the client has not submitted the form so their data is most likely stored
       axios.get("/api/get_stored_data",{
         params: {
           "ID": jobId
@@ -24,32 +24,27 @@ const Results = (props) => {
         props.setResults(res.data.results)
         props.setSummary(res.data.summary)
         setCloudImage(true)
-        props.setLoading(false)
+        props.setRequestState('completed')
        
         
       }).catch(err => {
         console.log(err)
-        props.setLoading(false)
+        props.setRequestState('before_request')
       })
 
     }
 },[props.fromForm])
-
- 
-
-  return (
-    
-    <div>
-      {props.Loading ? (
+  if(props.requestState == 'before_request'){
+      return null;
+  }else{
+      return (
         <div>
-        <ProgressBar active={props.fromForm} jobId={jobId} errorMessage={props.errorMessage}/>
-        
+          <ProgressBar active={props.fromForm} requestState={props.requestState} jobId={jobId} errorMessage={props.errorMessage}/>
+          <ResultsContent jobId={jobId} values={props.results} files={props.files} summary={props.summary} cloudImage={cloudImage} requestState={props.requestState} setResults= {props.setResults} setSummary={props.setSummary}/>
         </div>
-      ) : (
-       <ResultsContent jobId={jobId} values={props.results} files={props.files} summary={props.summary} cloudImage={cloudImage} setResults= {props.setResults} setSummary={props.setSummary}/>
-      )}
-    </div>
-  );
+      )
+  }
+ 
 };
 
 export default Results;
