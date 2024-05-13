@@ -12,6 +12,7 @@ import json
 import threading
 warnings.filterwarnings('ignore')
 #remove in prod 
+import time
 from programs.model import Model
 from programs.summarize import summarize
 from programs.sendEmail import email_user
@@ -120,7 +121,7 @@ def run():
         print('here') 
         pass
     
-    print('here') 
+   
     for id,key in enumerate(request.files):
         current_file = request.files.get(key)
         
@@ -129,9 +130,9 @@ def run():
             return "Invalid File Extension", 401
             
             
-
+        time.sleep(2)
         pred,PILimage = model.predict(current_file,id,data['has-gams'])
-        set_request_progress_thread = threading.Thread(target=set_progress, args=(data['id'],id+1,int(data['num-files'])))
+        set_request_progress_thread = threading.Thread(target=set_progress, args=(data['id'],id+1+previous_image_num,int(data['num-files'])))
         set_request_progress_thread.start()
         images.append(PILimage)
         image_filenames.append(current_file.filename)

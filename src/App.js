@@ -12,11 +12,10 @@ const App = () => {
   const [summary, setSummary] = useState({});
   const [files, setFiles] = useState(null);
   // 4 states "before_request" - "before_first_results" - "after_first_results" - "completed"
-
   const [requestState, setRequestState] = useState('before_request');
   const [fromForm,setFromForm] = useState(false);
   const [hideForm,setFormHidden] = useState(false);
-  const [errorMessage,setErrorMessage] = useState(null)
+  const [errorMessage,setErrorMessage] = useState(null);
 
   //recursive function to send all of the images in batches
   const sendForm = (forms,return_data) => {
@@ -76,7 +75,7 @@ const App = () => {
         />
         <Route path="/pages/about" exact component={About} />
         <div className="ui hidden divider"></div>
-        <Route path="/:id" exact render={(props) => <Results {...props} results={results} summary={summary} requestState={requestState} fromForm={fromForm} files={files} setResults={setResults} setSummary={setSummary} setRequestState={setRequestState} setFormHidden={setFormHidden} errorMessage={errorMessage}/>} />
+        <Route path="/:id" exact render={(props) => <Results {...props} results={results} summary={summary} requestState={requestState} fromForm={fromForm} files={files} setResults={setResults} setSummary={setSummary} setRequestState={setRequestState} setFormHidden={setFormHidden} errorMessage={errorMessage} />} />
       
         </div>
     </Router>

@@ -52,7 +52,7 @@ const Form = (props) => {
         formData.append("last-request",false);
       }
 
-      formData.append("num-files", batch_index);
+      formData.append("num-files", props.files.length);
       formData.append("id", jobId);
       formData.append("has-gams", hasGams);
       forms.push(formData)
