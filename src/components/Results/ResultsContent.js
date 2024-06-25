@@ -79,7 +79,7 @@ const ResultsContent = ({ jobId, values,files, summary, cloudImage,requestState,
     exportData.unshift(summary);
     return exportData;
   };
-  if(requestState == 'before_first_results')  {
+  if(requestState == 'before_first_results' || requestState == 'before_request')  {
     return null;
   }else{
   return (

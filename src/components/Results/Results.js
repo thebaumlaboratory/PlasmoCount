@@ -34,16 +34,14 @@ const Results = (props) => {
 
     }
 },[props.fromForm])
-  if(props.requestState == 'before_request'){
-      return null;
-  }else{
+  
       return (
         <div>
           <ProgressBar active={props.fromForm} requestState={props.requestState} jobId={jobId} errorMessage={props.errorMessage}  />
           <ResultsContent jobId={jobId} values={props.results} files={props.files} summary={props.summary} cloudImage={cloudImage} requestState={props.requestState} setResults= {props.setResults} setSummary={props.setSummary}/>
         </div>
       )
-  }
+
  
 };
 

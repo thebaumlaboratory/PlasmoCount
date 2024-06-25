@@ -6,26 +6,34 @@ const ProgressBar = ({ active,requestState,jobId, errorMessage}) => {
     const [current,setCurrent] = useState(0);
     const [total,setTotal] = useState(2);
     const [labelText,setLabelText] = useState("Uploading images (please do not refresh)")
-    let  progressInterval = null
-    const reset_progress = () => {
+    const [progInterval,setProgInterval] = useState(null)
+
+    
+
+    const reset_progress = (progressInterval) => {
         clearInterval(progressInterval);
         setCurrent(0);
         setTotal(2);
         setLabelText("Uploading images (please do not refresh)");
         progressInterval= null
     }
+    useEffect(()=> {
+        console.log('1')
+        if(errorMessage != null)    {
+            clearInterval(progInterval);
+        }
+    },[errorMessage])
 
     useEffect(() => {
-        if(requestState == "before_first_results" && progressInterval == null)  {
-            console.log("asdkfjhaweijw")
-            progressInterval = setInterval(() => {
+        if(requestState == "before_first_results")  {
+            let progressInterval = setInterval(() => {
                 axios.get("/api/get_request_progress",{
                     params: {
                       "ID": jobId
                     }
                   }).then((res) => {
                     if(res.data == 'finish')    {
-                        reset_progress()
+                        reset_progress(progressInterval)
                         return
                     }
                     if(res.data != "0") {
@@ -40,12 +48,13 @@ const ProgressBar = ({ active,requestState,jobId, errorMessage}) => {
                         }
                     }
                   }).catch((err) => {
-                    reset_progress()
+                    reset_progress(progressInterval)
                   })
             }, 2000);
+            setProgInterval(progressInterval)
         }
     },[requestState])
-    if(active && errorMessage == null && requestState != 'completed')  {
+    if(active && errorMessage == null && (requestState != 'completed' && requestState != 'before_request'))  {
         return <div><Progress percent={current/total*100}>{labelText}</Progress><Loader text="Fetching results..." /></div>;
     }else{
         return null

@@ -40,7 +40,7 @@ const TableRowCard = ({ jobId, values,files,summary,activeIndex,cloudImage,setRe
     }).then(res => {
       setrequestStatus({success: true,
                         error: false})
-
+      //to display success icon for 2 seconds
       setTimeout(() => {
         setrequestStatus({success: false,
           error: false})
@@ -52,7 +52,7 @@ const TableRowCard = ({ jobId, values,files,summary,activeIndex,cloudImage,setRe
      
     })
   }
-
+  //function to see if cursor is inside one of the boxes in the image
   const insideBox = (x,y,boxes) => {
     for( var index= 0; index < boxes.length;++index){
       if(x >= boxes[index].b[0]*scaleFactor && x <= boxes[index].b[2]*scaleFactor && y >= boxes[index].b[1]*scaleFactor && y <= boxes[index].b[3]*scaleFactor)  {
@@ -60,7 +60,7 @@ const TableRowCard = ({ jobId, values,files,summary,activeIndex,cloudImage,setRe
       }        
     }
   }
-
+  //set the context menu to its initial state
   const resetContextMenu = () => {
     setContextMenu({
       position: {
@@ -70,31 +70,38 @@ const TableRowCard = ({ jobId, values,files,summary,activeIndex,cloudImage,setRe
       toggled: false,
       text: null,
       cell_index: -1,
-      edited_cell : false
-
+      edited_cell : false,
+      lifestage: null
     })
   }
 
   const handleInfectionToggle = (lifestage) => {
     resetContextMenu()
     //logic to first figure out if cell is infected or not then toggle it 
-    
+
     changeCell("l" in values[activeIndex].boxes[contextMenu.cell_index],contextMenu.cell_index,lifestage)
     trackUnsavedData(contextMenu.cell_index,activeIndex)
   }
 
-
-  
-
-
-  const lifestageModificiation = (uninfected,lifestage,imageIndex) => {
+  const lifestageModificiation = (uninfected,lifestage,imageIndex,new_lifestage=null) => {
  
     const change = uninfected * 2 - 1
     
     let summaryEdit = { ...summary }
     let resultEdit = values
-    
-    if(lifestage<1.5) {
+    if(new_lifestage == null) {
+      return lifestageIteration(lifestage,change,imageIndex,resultEdit,summaryEdit)
+    }else{
+      [resultEdit,summaryEdit] = lifestageIteration(lifestage,change,imageIndex,resultEdit,summaryEdit)
+      return lifestageIteration(new_lifestage,-change,imageIndex,resultEdit,summaryEdit)
+    }
+  }
+
+  const lifestageIteration = (lifestage,change,imageIndex, resultEdit,summaryEdit) => {
+    if (lifestage == -1){
+      resultEdit[imageIndex].n_gam+=change;
+      summaryEdit.n_gam+=change;
+    }else if(lifestage<1.5) {
       resultEdit[imageIndex].n_ring+=change;
       summaryEdit.n_ring+=change;
     }else if(lifestage<2.5){
@@ -106,7 +113,6 @@ const TableRowCard = ({ jobId, values,files,summary,activeIndex,cloudImage,setRe
     }
     
     return [resultEdit,summaryEdit]
-    
   }
 
   const resultAndSummaryModification = (uninfected,lifestage,imageIndex,cellIndex) => {
@@ -165,13 +171,40 @@ const TableRowCard = ({ jobId, values,files,summary,activeIndex,cloudImage,setRe
   }
 
   const changeCell = async (infected, cellIndex,  lifestage = null,undo = false, notACell=false,imageIndex=activeIndex) => {
-    
     let resultEdit, summaryEdit
+    if(infected == true && lifestage != null) {
+      //this means that we are editing a cell's lifestage
+      [resultEdit,  summaryEdit] = lifestageModificiation(!infected,values[imageIndex].boxes[cellIndex].l,imageIndex,lifestage)
+      resultEdit[imageIndex].boxes[cellIndex].old_val = resultEdit[imageIndex].boxes[cellIndex].l
+      resultEdit[imageIndex].boxes[cellIndex].l = lifestage
+      setSummary(summaryEdit)
+      summary = summaryEdit
+      setResults([...resultEdit])
+      return
+    }
+    console.log(undo)
+    console.log(infected)
+    console.log(values[imageIndex].boxes[cellIndex].old_val)
+    if(undo == true && infected == true && values[imageIndex].boxes[cellIndex].old_val != 0) {
+      //this means that we are editing a cell's lifestage
+      let x = lifestageModificiation(!infected,values[imageIndex].boxes[cellIndex].l,imageIndex,values[imageIndex].boxes[cellIndex].old_val)
+      resultEdit = x[0]
+      summaryEdit = x[1]
+      resultEdit[imageIndex].boxes[cellIndex].l = resultEdit[imageIndex].boxes[cellIndex].old_val
+      delete resultEdit[imageIndex].boxes[cellIndex].old_val
+      setSummary(summaryEdit)
+      summary = summaryEdit
+      setResults([...resultEdit])
+      return
+    }
+
+    
     if(notACell)  {
       [resultEdit,  summaryEdit] = cellResultAndSummaryModification(!infected,values[imageIndex].boxes[cellIndex].l,imageIndex,undo)
       if(undo)  {
         delete resultEdit[imageIndex].boxes[cellIndex].nc
         delete resultEdit[imageIndex].boxes[cellIndex].old_val
+
       }else{
         resultEdit[imageIndex].boxes[cellIndex].nc = true
         resultEdit[imageIndex].boxes[cellIndex].old_val = true
@@ -219,6 +252,7 @@ const TableRowCard = ({ jobId, values,files,summary,activeIndex,cloudImage,setRe
   }
 
   const trackUnsavedData = (cellIndex,imageIndex) => {
+    //a variable to uniquely identify each cell across all images
     const uniqueCellIndex = cellIndex*(values.length)+ imageIndex
 
    
@@ -280,7 +314,8 @@ const TableRowCard = ({ jobId, values,files,summary,activeIndex,cloudImage,setRe
       toggled: true,
       infected: "l" in values[activeIndex].boxes[box],
       cell_index: box,
-      edited_cell : "old_val" in values[activeIndex].boxes[box]
+      edited_cell : "old_val" in values[activeIndex].boxes[box],
+      lifestage: values[activeIndex].boxes[box].l
     })
     
   };
@@ -327,6 +362,8 @@ const TableRowCard = ({ jobId, values,files,summary,activeIndex,cloudImage,setRe
             context.strokeStyle = 'rgba(50,50,50,0.3)';
           }
           
+        }else if(element.l==-1) {
+          context.strokeStyle = '#ffd92f'
         }else if(element.l<1.5) {
           context.strokeStyle = '#f77189'
         }else if(element.l<2.5){
@@ -372,6 +409,16 @@ const TableRowCard = ({ jobId, values,files,summary,activeIndex,cloudImage,setRe
   }, [contextMenu])
   return (
     <div className={styles.box}>
+    <div style={{ display: 'flex',padding:'10px',height: '35px',fontSize: '75%'}}>
+      
+    Ring &nbsp;<div style={{ backgroundColor: '#f77189',width: '15px',height: '15px',borderRadius:'3px'}}></div>&emsp;&emsp;
+    Trophozoite &nbsp;<div style={{ backgroundColor: '#50b131',width: '15px',height: '15px',borderRadius:'3px'}}></div>&emsp;&emsp;
+    Schizont &nbsp;<div style={{ backgroundColor: '#3ba3ec',width: '15px',height: '15px',borderRadius:'3px'}}></div>&emsp;&emsp;
+    Gametocyte &nbsp;<div style={{ backgroundColor: '#ffd92f',width: '15px',height: '15px',borderRadius:'3px'}}> </div>&emsp;&emsp;
+    Uninfected &nbsp;<div style={{ backgroundColor: '#323232',width: '15px',height: '15px',opacity: '0.3',borderRadius:'3px'}}></div>
+    
+    </div>
+    
     <div ref={divRef}  style={{width:"100%", position: "relative", height: (canvasRef.current == null ? 0: canvasRef.current.height)}}>
     <canvas ref={canvasRef}  style={{position: "absolute", top:"0",left:"0", zIndex: "0"}}/>
     <canvas ref={canvasRef1} style={{position: "absolute", top:"0",left:"0", zIndex: "1"}} onClick={handleClick} onContextMenu={handleClick}/>
@@ -388,21 +435,27 @@ const TableRowCard = ({ jobId, values,files,summary,activeIndex,cloudImage,setRe
         {contextMenu.infected ?
         (contextMenu.edited_cell ? <div className={styles.contextmenu}><button className={styles.button} onClick={undoChange}  >Undo Change</button></div>:
         <div className={styles.contextmenu}>
-        <button className={styles.button} onClick={handleInfectionToggle}  >Mark as uninfected</button>
-        <button className={styles.button} onClick={handleCellToggle}  >Mark as not a red blood cell</button>
+        <button className={styles.button} onClick={() => handleInfectionToggle(null)}  >Mark as Uninfected</button>
+        {(contextMenu.lifestage < 0 || contextMenu.lifestage > 1.5) && <button className={styles.button} onClick={() => handleInfectionToggle(1)}  >Mark as Ring</button>}
+        {(contextMenu.lifestage <= 1.5 || contextMenu.lifestage > 2.5) && <button className={styles.button} onClick={() => handleInfectionToggle(2)}  >Mark as Trophozoite</button>}
+        {(contextMenu.lifestage <= 2.5) && <button className={styles.button} onClick={() => handleInfectionToggle(2.75)}  >Mark as Schizont</button>}
+        {(contextMenu.lifestage != -1) && <button className={styles.button} onClick={() => handleInfectionToggle(-1)}  >Mark as Gametocyte</button>}
+        <button className={styles.button} onClick={handleCellToggle}  >Not a red blood cell</button>
         </div>):
         (contextMenu.edited_cell ? <div className={styles.contextmenu}><button className={styles.button} onClick={undoChange}  >Undo Change</button></div>:
         <div className={styles.contextmenu}>
         <button className={styles.button} onClick={() => handleInfectionToggle(1)}  >Mark as Ring</button>
         <button className={styles.button} onClick={() => handleInfectionToggle(2)}  >Mark as Trophozoite</button>
         <button className={styles.button} onClick={() => handleInfectionToggle(2.75)}  >Mark as Schizont</button>
-        <button className={styles.button} onClick={handleCellToggle}  >Mark as not a red blood cell</button> 
+        <button className={styles.button} onClick={() => handleInfectionToggle(-1)}  >Mark as Gametocyte</button>
+        <button className={styles.button} onClick={handleCellToggle}  >Not a red blood cell</button> 
         
         </div>)}
         
       </div> :<div></div> }
       
     </div>
+    
     {unsavedChanges.length ?  <div style={{padding: "6px",textAlign:"right"}}>
           <button className="ui primary button" onClick={uploadChanges}>
             Save

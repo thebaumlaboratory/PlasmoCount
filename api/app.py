@@ -124,13 +124,11 @@ def run():
    
     for id,key in enumerate(request.files):
         current_file = request.files.get(key)
-        
         if invalid_file(current_file.filename):
             #return error only accept 'png', 'jpg', 'jpeg','tif','tiff'
             return "Invalid File Extension", 401
             
             
-        time.sleep(2)
         pred,PILimage = model.predict(current_file,id,data['has-gams'])
         set_request_progress_thread = threading.Thread(target=set_progress, args=(data['id'],id+1+previous_image_num,int(data['num-files'])))
         set_request_progress_thread.start()
@@ -158,7 +156,7 @@ def run():
         f.name = image_name
         copy_files.append(f)
     if last_request:
-        #in last request we want to upload both the images as well as the result data.
+        #in last request we want to upload both the images as well as the result data to gcs
         request_info = {
                 "jobID": data['id'],
                 'data-contrib': data['data-contrib'],
@@ -172,6 +170,7 @@ def run():
         t1 = threading.Thread(target=upload_data, args=(copy_files,cloud_data,request_info,previous_image_num))
         t1.start()
     else:
+        #if it's not the last request all we do is upload the image files to gcs
         t1 = threading.Thread(target=upload_images, args=(copy_files,data['id'],previous_image_num ))
         t1.start()
     return output

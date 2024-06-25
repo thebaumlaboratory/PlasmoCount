@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Form from "./components/Form/Form";
 import Menu from "./components/Menu";
 import About from "./components/About";
@@ -16,10 +16,10 @@ const App = () => {
   const [fromForm,setFromForm] = useState(false);
   const [hideForm,setFormHidden] = useState(false);
   const [errorMessage,setErrorMessage] = useState(null);
-
+  
   //recursive function to send all of the images in batches
   const sendForm = (forms,return_data) => {
-
+    
     if(forms.length == 0) {
       setRequestState('completed')
       return
@@ -42,7 +42,7 @@ const App = () => {
   }).catch((err) =>{
     setRequestState("before_request")
     console.log(err.response.data)
-    setErrorMessage(err.response.data)
+    setErrorMessage("Error: " + err.response.data)
     
   })
   }
