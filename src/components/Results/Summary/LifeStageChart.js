@@ -1,33 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Slider } from "react-semantic-ui-range";
 import Plot from "react-plotly.js";
+import ImageBar from "./ImageBar"
 
-const ImageBar = (jobId, x, ind) => {
-  const endPoint =
-    jobId === "example"
-      ? "api/example"
-      : `https://storage.googleapis.com/plasmocount-bucket/${jobId}`;
-  // for production: https://storage.googleapis.com/plasmocount-bucket/${jobId}
-  const images = ind.map((i, key) => {
-    return (
-      <img key={key} alt="" className="ui image" src={`${endPoint}/${x[i]}`} />
-    );
-  });
-  return (
-    <div className="ui center aligned grid">
-      <div className="ui mini images">{images}</div>
-    </div>
-  );
-};
 
 const LifeStageHist = ({ x, binSize, onClick, onDoubleClick, job }) => {
+
   return (
     <div>
       <Plot
         data={[
           {
             type: "histogram",
-            x: x,
+            x: x.asex_stages,
             xbins: {
               end: 4,
               size: binSize,
@@ -57,7 +42,16 @@ const LifeStageHist = ({ x, binSize, onClick, onDoubleClick, job }) => {
   );
 };
 
-const LifeStageChart = ({ jobId, data, images }) => {
+const LifeStageChart = ({ files,data,set_data,file_boxes, jobId, cloudImage}) => {
+  useEffect(()=> {
+    if(data.boxes != undefined)  {
+      let summary_stages = data.boxes.map(cell => cell.life)
+      let new_data = data
+      new_data.asex_stages = summary_stages
+      set_data(new_data)
+    }
+  },[data])
+  
   const [activePoints, changeActivePoints] = useState(null);
   const [binSize, changeBinSize] = useState(0.25);
   const settings = {
@@ -90,7 +84,8 @@ const LifeStageChart = ({ jobId, data, images }) => {
       <div className="ui basic segment">
         {activePoints &&
           activePoints.length > 0 &&
-          ImageBar(jobId, images, activePoints)}
+          <ImageBar files={files} cloudImage={cloudImage} jobId={jobId} summary_boxes={data.boxes} file_boxes={file_boxes} ind={activePoints}></ImageBar>
+          }
       </div>
       <br />
     </div>

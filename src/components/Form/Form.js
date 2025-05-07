@@ -1,59 +1,71 @@
 import "./Form.css";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import { MessageHeader, Message } from 'semantic-ui-react'
+
 import { v4 as uuidv4 } from "uuid";
 
 const Form = (props) => {
   const [emailAddress, setEmailAddress] = useState("");
   const [hasGams, setGams] = useState(false);
   const [dataContrib, setDataContrib] = useState(true);
-  const [files, setFiles] = useState(null);
-  const [isOpen, makeOpen] = useState(true);
-  const active = isOpen ? "active" : "";
-
-  const uploadFile = async (file, jobId) => new Promise(async resolve => {
-    let urlFormData = new FormData();
-    urlFormData.append("fname", jobId + "/files/" + file.name);
-    var response = await fetch("/api/get-url", {
-      method: "POST",
-      body: urlFormData,
-    });
-    var url = await response.text();
-    let config = {
-      headers: {
-        'Content-type': 'application/octet-stream',
-      }
-    }
-    await axios.put(url, file, config);
-    resolve();
-  });
-
+  
+  const active = !props.hideForm ? "active" : "";
+  
   const populateForm = async (e, jobId) => {
     e.preventDefault();
-    if (!files) {
+    if (!props.files) {
       return;
     }
-    makeOpen(false);
-    let formData = new FormData();
-    const timestamp = Date.now();
-    const date = new Date(timestamp);
-    var uploads = [];
-    for (let i = 0; i < files.length; i++) {
-      uploads.push(uploadFile(files[i], jobId));
-    }
-    await Promise.all(uploads).then((values) => {
-      console.log(values);
-    });
-    formData.append("id", jobId);
-    formData.append("email-address", emailAddress);
-    formData.append("has-gams", hasGams);
-    formData.append("data-contrib", dataContrib);
-    formData.append("date", date.toISOString());
-    return formData;
+    
+    // Google cloud only allows a maximum of 32MB upload so we will do it in batches 
+    // The size threshold is slightly lower for leniency
+    
+    let image_index = 0;
+    const batch_size = 5;
+    let forms = []
+    while(image_index < props.files.length){
+
+      let formData = new FormData();
+      
+      
+      
+      let batch_index = 0;
+      let size_threshold = 30 * 1024 * 1024;
+      console.log(props.files[image_index])
+      while(image_index < props.files.length && batch_index < batch_size && size_threshold - props.files[image_index].size > 0) {
+          
+          size_threshold -= props.files[image_index].size;
+          formData.append(String(image_index),props.files[image_index],props.files[image_index].name);
+          batch_index += 1;
+          image_index += 1;
+      }
+
+      if(image_index >= props.files.length){
+        const timestamp = Date.now();
+        const date = new Date(timestamp);
+        formData.append("last-request",true);
+        formData.append("email-address", emailAddress);
+        formData.append("data-contrib", dataContrib);
+        formData.append("date", date.toISOString());
+      }else {
+        formData.append("last-request",false);
+      }
+
+      formData.append("num-files", props.files.length);
+      formData.append("id", jobId);
+      formData.append("has-gams", hasGams);
+      forms.push(formData)
+    }  
+   
+    return forms;
   };
 
   const onFormSubmit = async (e) => {
+    if (!props.files) {
+      return;
+    }
+    props.setFromForm(true)
     const jobId = uuidv4();
     props.setActive(jobId);
     populateForm(e, jobId).then(formData => props.onSubmit(formData));
@@ -63,12 +75,12 @@ const Form = (props) => {
     <div className="ui styled fluid accordion">
       <div className={`${active} title`}>
         <span style={{ lineHeight: "28px" }}>
-          <i onClick={() => makeOpen(!isOpen)} className="dropdown icon"></i>
+          <i onClick={() => props.setFormHidden(!props.hideForm)} className="dropdown icon"></i>
           Upload
         </span>
         <Link
           to="/example"
-          onClick={() => makeOpen(false)}
+          onClick={() => props.setFormHidden(true)}
           className="ui mini right floated basic button"
         >
           Load example
@@ -95,14 +107,6 @@ const Form = (props) => {
             />
           </div>
           <div className="field">
-            <label>Malaria Species</label>
-            <select className="ui fluid disabled dropdown">
-              <option value="falciparum" placeholder="Plasmodium falciparum">
-                Plasmodium falciparum
-              </option>
-            </select>
-          </div>
-          <div className="field">
             <div className="ui checkbox">
               <input
                 type="checkbox"
@@ -116,10 +120,10 @@ const Form = (props) => {
             <label>Giemsa stain images</label>
             <input
               type="file"
-              onChange={(e) => setFiles(e.target.files)}
+              onChange={(e) => props.setFiles(e.target.files)}
               multiple
             />
-            <div className="description">.jpg or .png recommended, .tiff may cause delays</div>
+            <div className="description">.jpg or .png recommended, .tiff causes delays</div>
           </div>
           <div className="field">
             <div className="ui checkbox">
@@ -138,6 +142,10 @@ const Form = (props) => {
           </button>
         </form>
       </div>
+      {props.errorMessage && <Message negative>
+    <MessageHeader><i class="exclamation triangle icon"></i> Error</MessageHeader>
+    {props.errorMessage}
+  </Message>}
     </div>
   );
 };

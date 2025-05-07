@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import LifeStageChart from "./LifeStageChart";
 import PieChart from "./PieChart";
 
-const Summary = ({ jobId, summary }) => {
+const Summary = ({ jobId, summary,setSummary,files, file_boxes,cloudImage }) => {
+
   return (
     <div>
       <div className="ui fluid segment">
@@ -30,8 +31,11 @@ const Summary = ({ jobId, summary }) => {
       <div className="ui fluid segment">
         <LifeStageChart
           jobId={jobId}
-          data={summary.asex_stages}
-          images={summary.asex_images}
+          set_data={setSummary}
+          data = {summary}
+          files={files}
+          file_boxes={file_boxes}
+          cloudImage={cloudImage}
         />
       </div>
     </div>

@@ -5,17 +5,28 @@ import Summary from "./Summary/Summary";
 import { CSVLink } from "react-csv";
 import TablePagination from "./Table/TablePagination";
 
-const ResultsContent = ({ jobId, values, summary }) => {
+const ResultsContent = ({ jobId, values,files, summary, cloudImage,requestState,setResults,setSummary }) => {
   const mobileDim = 768; // based on Semantic UI
   const [activeRowIndex, setActiveRowIndex] = useState(null);
   const [activePage, setActivePage] = useState(1);
   const [isDesktop, setDesktop] = useState(window.innerWidth > mobileDim);
   const maxRows = isDesktop ? 5 : 1;
-  const rowData = values.slice(
+  const activeIndex = maxRows * (activePage - 1) + activeRowIndex
+  const [rowData,setRowData] = useState(values.slice(
     maxRows * (activePage - 1),
     maxRows * activePage
-  );
-  const activeImage = values[maxRows * (activePage - 1) + activeRowIndex];
+  ))
+
+  useEffect(() => {
+    
+    setRowData(values.slice(
+      maxRows * (activePage - 1),
+      maxRows * activePage
+    ));
+  },[values,activePage])
+  
+ 
+  const activeImage = values[activeIndex];
 
   const dataLabels = {
     name: "Name",
@@ -54,6 +65,7 @@ const ResultsContent = ({ jobId, values, summary }) => {
 
   // active row and pagination
   const handleClick = (i) => {
+    setActiveRowIndex(-1);
     setActiveRowIndex(i);
   };
 
@@ -67,7 +79,9 @@ const ResultsContent = ({ jobId, values, summary }) => {
     exportData.unshift(summary);
     return exportData;
   };
-
+  if(requestState == 'before_first_results' || requestState == 'before_request')  {
+    return null;
+  }else{
   return (
     <div className="ui stackable two column grid">
       <div className="column">
@@ -79,13 +93,14 @@ const ResultsContent = ({ jobId, values, summary }) => {
         >
           Export
         </CSVLink>
-        <Summary jobId={jobId} summary={summary} />
+        <Summary jobId={jobId} files={files} summary={summary} setSummary={setSummary} cloudImage={cloudImage} file_boxes={values.map((elem) => elem.boxes)} />
       </div>
       <div className="column">
         <Table
           rowData={rowData}
           dataLabels={isDesktop ? dataLabels : { name: "Name" }}
           onClick={handleClick}
+
           activeRowIndex={activeRowIndex}
         />
         <div className="ui container center aligned">
@@ -96,11 +111,12 @@ const ResultsContent = ({ jobId, values, summary }) => {
           />
         </div>
         {activeRowIndex != null && (
-          <TableRowCard jobId={jobId} data={activeImage} />
+          <TableRowCard jobId={jobId} files={files} values={values} summary={summary} activeIndex={activeRowIndex + 5*(activePage-1)} cloudImage={cloudImage} setResults={setResults} setSummary={setSummary}/>
         )}
       </div>
     </div>
   );
+  }
 };
 
 export default ResultsContent;

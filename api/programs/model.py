@@ -1,123 +1,200 @@
-from pathlib import Path
-import pandas as pd
+from ultralytics import YOLO
+from ultralytics.utils.ops import non_max_suppression
+from fastai import *
+from fastai.vision.all import *
+import torchvision.transforms as T
+import timm
 from PIL import Image as PILImage
-import torch
-from torchvision import transforms, ops
-from fastai.basic_train import load_learner
-from fastai.vision import Image
-from fastai.core import FloatItem
 import matplotlib.pyplot as plt
-from scipy import stats
+import matplotlib.patches as patches
+import time
+import torch
+from torchvision.ops import nms
+CLASSICIFATION_IMAGE_SIZE = (70,70)
+CLASSICIFATION_BATCH_SIZE = 16
+IOU_THRESHOLD = 0.5
+#convert and normalize image
+preprocess = T.Compose([                                 
+    T.ToTensor(),                       
+    T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
+
+class Model():
+    def __init__(self):
+        self.is_loaded = False
+    def load(self):
+        device = torch.device("cpu")
+        self.od_model = YOLO('./models/yolov8n.pt')
+        self.od_model.to(device)
+        self.cls_model  = load_learner('./models/classification_model')
+        self.cls_model.to(device)
+        self.lifecycle_model= torch.load('./models/lifecycle_model')
+        self.lifecycle_model.eval()
+        self.gametocyte_model= torch.load('./models/gametocyte_model')
+        self.gametocyte_model.eval()
+        self.is_loaded = True
+
+    def predict(self,image_file,image_id,check_for_gametoctyes):
+        
+        image_name = image_file.filename
+        image = PILImage.open(image_file)
+        t = time.time()
+        bboxes = self.detect_RBCs(image)
+        print('object detection')
+        print(time.time()-t)
+        if len(bboxes) == 0:
+            #then we have nothing to classify so we return
+            return self.summarise_image([],image_name,image_id), image
+        RBC_data = self.classify_RBCs(bboxes,image,check_for_gametoctyes)
+        
+        return self.summarise_image(RBC_data,image_name,image_id), image
 
 
-class Model:
-    def __init__(self,
-                 model_path='./models',
-                 od_model='faster-rcnn.pt',
-                 class_model='class_resnet.pkl',
-                 ls_model='ls_resnet.pkl',
-                 gam_model='gam_resnet.pkl',
-                 cutoffs=[1.5, 2.5]):
-        model_path = Path(model_path)
-        device = torch.device(
-            'cuda') if torch.cuda.is_available() else torch.device('cpu')
-        self.od_model = torch.load(str(model_path / od_model), device)
-        self.od_model.eval()
-        self.class_model = load_learner(path=model_path, file=class_model)
-        self.ls_model = load_learner(path=model_path, file=ls_model)
-        self.gam_model = load_learner(path=model_path, file=gam_model)
-        self.cutoffs = cutoffs
+    #returns a list of predicted bboxes in xyxy format
+    def detect_RBCs(self,image):
+       
+        results = self.od_model(image,iou=IOU_THRESHOLD,verbose=False,max_det=800)
+        bboxes = []
+        scores = []
+        for result in results:
+            for conf_scores,box_scaled_0_1, boxxyxy in zip(result.boxes.conf,result.boxes.xyxyn,result.boxes.xyxy):
+                #exclude boxes partially outside of FOV
+                if box_scaled_0_1[3] < .999 and box_scaled_0_1[2] < .999 and box_scaled_0_1[0] > 0.001 and box_scaled_0_1[1] > 0.001:
+                    bboxes.append(boxxyxy.type(torch.int32).cpu().tolist())
+                    
+        return bboxes
+    
+    # returns a list of dicts containing information about infection and lifestage
+    def classify_RBCs(self,bboxes,PIL_image,check_for_gametoctyes):
+        
+        uninfected_dictionary = []
+        infected_dictionary = []
+        img_list = []
+        infected_indices = []
+        #load images into a list
+        for bbox in bboxes:
+            crop = PIL_image.crop(bbox).resize(CLASSICIFATION_IMAGE_SIZE).convert("RGB")
+            img_list.append( [preprocess(crop)])
 
-    def load_image(self, fileName):
-        self.fileName = fileName
-        img = PILImage.open(self.fileName).convert("RGB")
-        tensor = transforms.ToTensor()(img)
-        self.img = tensor
-        return tensor
-
-    def predict(self, has_gams):
-        with torch.no_grad():
-            prediction = self.od_model([self.img])[0]
-            prediction = self.post_processing(prediction)
-            # get crops for class detection
-            classes = []
-            life_stages = []
-            for bbox in prediction['boxes']:
-                x0, y0, x1, y1 = bbox.int()
-                bbox_img = Image(self.img[:, y0:y1, x0:x1])
-                bbox_pred = self.class_model.predict(bbox_img)
-                if str(bbox_pred[0]) == 'infected':
-                    if has_gams:
-                        gam_pred = self.gam_model.predict(bbox_img)
-                        if str(gam_pred[0]) == 'asexual':
-                            ls_pred = self.ls_model.predict(bbox_img)
-                        else:
-                            ls_pred = [FloatItem(-1)]
-                    else:
-                        ls_pred = self.ls_model.predict(bbox_img)
-                    life_stages.append(ls_pred)
+        #load the data into batches with the fastai Dataloader https://docs.fast.ai/data.load.html
+        dl = DataLoader(img_list, batch_size=CLASSICIFATION_BATCH_SIZE, shuffle=False)
+    
+        pred = self.cls_model.get_preds(dl=dl)
+        
+        
+        for index in range(0,len(pred[0])):
+            if pred[0][index][0] < pred[0][index][1]:
+                infected_indices.append(index)
+                infected_dictionary.append({'b':bboxes[index]})
+            else:
+                uninfected_dictionary.append({'b':bboxes[index]})
+        
+        #get the images that are infected
+        infected_image_list = [img_list[i][0] for i in infected_indices]
+        #on each infected cell we predict if it's a gametocyte and its lifestage
+        gametocytes = None
+        if len(infected_indices) > 0:
+            if check_for_gametoctyes:
+                gametocytes = self.classify_gametocytes(infected_image_list)
+          
+            infected_lifestages = self.age_infected(infected_image_list)
+            
+            for infected_index in range(0,len(infected_dictionary)):
+                if check_for_gametoctyes and gametocytes[infected_index]:
+                    infected_dictionary[infected_index]['l'] = -1
                 else:
-                    life_stages.append(None)
-                classes.append(bbox_pred)
+                    infected_dictionary[infected_index]['l'] = round(infected_lifestages[infected_index][0].item(),2)
+            
+            infected_dictionary.sort(key= lambda cell: cell['l'])
+        
+            return infected_dictionary + uninfected_dictionary 
+        return uninfected_dictionary
+    
 
-        # format predictions
-        result = {}
-        result['boxes'] = pd.Series(prediction['boxes'].tolist())
-        result['p_boxes'] = pd.Series(prediction['scores'].tolist())
-        result = pd.DataFrame.from_dict(result)
-        result[['classes', 'p_classes']] = pd.Series(classes).apply(
-            lambda x: pd.Series([str(x[0]), (x[2][x[1]]).item()]))
-        result['life_stage'] = pd.Series(life_stages).apply(
-            lambda x: float(x[0].data) if x is not None else None)
-        result['life_stage_c'] = result['life_stage'].apply(
-            lambda x: self.calc_life_stages(x))
+    def age_infected(self,image_list):
+        with torch.no_grad():
+            t = torch.stack(image_list, dim=0)
+            output = self.lifecycle_model(t)
+            
+        return output
+    
+    def classify_gametocytes(self,image_list):
+        with torch.no_grad():
+            t = torch.stack(image_list, dim=0)
+            output = self.gametocyte_model(t)
+            batch_prediction = torch.where(output[:,0] < output[:,1],True,False)
+            
+        return batch_prediction.tolist()
 
+    def summarise_image(self,RBC_data,image_name,image_id,cutoffs=[1.5,2.5]):
+        n_infected = 0
+        n_uninfected = 0
+        n_ring = 0
+        n_troph = 0
+        n_schizont = 0
+        n_gam = 0
+        parasitemia = 0
+        n_cells = len(RBC_data)
+        for cell in RBC_data:
+            if "l" in cell:
+                n_infected +=1
+                if cell['l'] == -1:
+                    n_gam+=1
+                elif cell['l'] < cutoffs[0]:
+                    n_ring +=1
+                elif cell['l'] < cutoffs[1]:
+                    n_troph +=1
+                else:
+                    n_schizont +=1
+
+        n_uninfected = n_cells - n_infected
+        if(n_cells > 0):
+            parasitemia = round(n_infected / n_cells,3)
+        else:
+            parasitemia = 0
+        result = {
+            "id" : image_id,
+            "name": image_name,
+            "n_cells": n_cells,
+            "n_infected": n_infected,
+            "n_uninfected": n_uninfected,
+            "parasitemia": parasitemia,
+            "n_ring": n_ring,
+            "n_troph": n_troph,
+            "n_schizont": n_schizont,
+            "n_gam" : n_gam,
+            "boxes" : RBC_data,
+        }
         return result
 
-    def post_processing(self,
-                        pred,
-                        score_thresh=0.9,
-                        iou_thresh=0.5,
-                        z_thresh=4):
-        pred = self.apply_score_filter(pred, score_thresh)
-        pred = self.apply_nms(pred, iou_thresh)
-        pred = self.apply_size_filter(pred, z_thresh)
-        return pred
+    #helper function for visualisation (never called in prod)
+    def plot_boxes(self,image):
+        
+        boxes = self.detect_RBCs_40x(image)
+        
+        boxes = self.classify_RBCs(boxes,image,True)
+        fig, ax = plt.subplots()
+        
+        plt.imshow(image)
+        plt.axis('off')
+        for box in boxes:
+            
+            if "l" in box:
+                if box['l'] == -1:
+                    rect = patches.Rectangle((box['b'][0],box['b'][1]),(box['b'][2]-box['b'][0]),(box['b'][3]-box['b'][1]), linewidth=2, edgecolor='pink', facecolor='none')
+                    ax.add_patch(rect)
+                elif box['l'] < 1.5:
+                    rect = patches.Rectangle((box['b'][0],box['b'][1]),(box['b'][2]-box['b'][0]),(box['b'][3]-box['b'][1]), linewidth=2, edgecolor='r', facecolor='none')
+                    ax.add_patch(rect)
+                elif box['l'] < 2.5:
+                    rect = patches.Rectangle((box['b'][0],box['b'][1]),(box['b'][2]-box['b'][0]),(box['b'][3]-box['b'][1]), linewidth=2, edgecolor='g', facecolor='none')
+                    ax.add_patch(rect)
+                else:
+                    rect = patches.Rectangle((box['b'][0],box['b'][1]),(box['b'][2]-box['b'][0]),(box['b'][3]-box['b'][1]), linewidth=2, edgecolor='b', facecolor='none')
+                    ax.add_patch(rect)
+            else:
+                rect = patches.Rectangle((box['b'][0],box['b'][1]),(box['b'][2]-box['b'][0]),(box['b'][3]-box['b'][1]), linewidth=1, edgecolor='grey', facecolor='none')
+                ax.add_patch(rect)
+        plt.show()
 
-    def apply_nms(self, pred, iou_thresh):
-        idx = ops.nms(pred["boxes"], pred["scores"], iou_thresh)
-        for i in ["boxes", "labels", "scores"]:
-            pred[i] = pred[i][idx]
-        return pred
-
-    def apply_score_filter(self, pred, thresh):
-        idx = [i for i, score in enumerate(pred['scores']) if score > thresh]
-        for i in ["boxes", "labels", "scores"]:
-            pred[i] = pred[i][idx]
-        return pred
-
-    def calc_area(self, coods):
-        return abs((coods[:, 2] - coods[:, 0]) * (coods[:, 3] - coods[:, 1]))
-
-    def apply_size_filter(self, pred, z_thresh):
-        area = self.calc_area(pred['boxes'])
-        zscores = stats.zscore(area)
-        idx = [i for i, score in enumerate(zscores) if abs(score) < z_thresh]
-        for i in ["boxes", "labels", "scores"]:
-            pred[i] = pred[i][idx]
-        return pred
-
-    def calc_life_stages(self, x):
-        RT_cutoff, TS_cutoff = self.cutoffs
-        if not x:
-            return 'uninfected'
-        elif (x >= 0) & (x <= RT_cutoff):
-            return 'ring'
-        elif (x > RT_cutoff) & (x <= TS_cutoff):
-            return 'trophozoite'
-        elif (x > TS_cutoff):
-            return 'schizont'
-        elif (x == -1):
-            return 'gametocyte'
-        else:
-            return 'uninfected'
+    
